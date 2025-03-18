@@ -1,0 +1,10 @@
+./backend/node_modules
+# Ignore log files
+*.log
+
+# Ignore all `node_modules` directory
+node_modules/
+
+
+# Ignore environment files
+.env
