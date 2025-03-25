@@ -6,7 +6,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 
 const skillswapuser = require('./Model/User');  // Import User model
-// const Payment = require('./Model/Payment');  // Import the Payment model
+const SkillForm = require('./Model/SkillForm'); // Import SkillForm model
 
 const app = express();
 app.use(cors());
@@ -104,6 +104,47 @@ app.post('/login', async (req, res) => {
         return res.status(500).json({ message: 'Server error' });
     }
 });
+
+// Route to handle skill form submission
+app.post("/submit-profile", async (req, res) => {
+    const { name, city, contactNumber, bio, skills } = req.body;
+  
+    if (!name || !city || !contactNumber || !bio || !skills || !Array.isArray(skills)) {
+      return res.status(400).json({ message: "All fields are required and skills must be an array" });
+    }
+  
+    try {
+      const newProfile = new SkillForm({
+        name,
+        city,
+        contactNumber,
+        bio,
+        skills,
+      });
+  
+      await newProfile.save();
+      res.status(201).json({ message: "Profile submitted successfully" });
+    } catch (error) {
+      console.error("Error submitting profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+
+// the endpoint for the profile form
+app.get("/get-latest-profile", async (req, res) => {
+    try {
+      const latestProfile = await SkillForm.findOne().sort({ _id: -1 }); // Fetch the latest profile
+      if (!latestProfile) {
+        return res.status(404).json({ message: "No profile found" });
+      }
+      res.json(latestProfile);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
 app.get("/", (req, res) => {
   res.send("Backend is working!");
 });
