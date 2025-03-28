@@ -1,11 +1,10 @@
-
 "use client";
-import React, { useState } from "react";
-import { redirect } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import axios from "axios";
 
 export default function SignUp() {
-  // const router = useRouter(); //  Initialize the router
+  const router = useRouter(); 
 
   const [userName, setUserName] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -16,6 +15,13 @@ export default function SignUp() {
   const [userNameError, setUserNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+
+  // Redirect user if already logged in
+  useEffect(() => {
+    // Store only the username in localStorage
+    const userData = { userName };
+    localStorage.setItem('user', JSON.stringify(userData));
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -40,15 +46,15 @@ export default function SignUp() {
       if (response.status === 201) {
         console.log("User registered successfully:", response.data);
 
-        const userData = { username: userName, firstName, lastName, email };
+        const userData = { userName, firstName, lastName, email };
         localStorage.setItem("user", JSON.stringify(userData));
 
         setShowPopup(true);
 
-        // ✅ Redirect to home page after 3 seconds
+        // Redirect to login page after 3 seconds
         setTimeout(() => {
           setShowPopup(false);
-          redirect("/main"); // ✅ Use router.push to navigate in Next.js
+          router.push("/main");
         }, 3000);
       }
     } catch (error) {

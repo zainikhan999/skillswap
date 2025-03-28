@@ -1,125 +1,167 @@
 "use client";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
+import axios from "axios";
 
-export default function SkillsForm() {
+export default function SignUp() {
+  const router = useRouter(); 
 
-  const [skills, setSkills] = useState([
-    { id: 1, name: "", experience: "", expertise: "Beginner", description: "" },
-  ]);
+  const [userName, setUserName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [userNameError, setUserNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
 
-  const handleChange = (id, field, value) => {
-    setSkills((prevSkills) =>
-      prevSkills.map((skill) =>
-        skill.id === id ? { ...skill, [field]: value } : skill
-      )
-    );
-  };
+  // Redirect user if already logged in
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      router.push("/main"); // Redirect to main page
+    }
+  }, []);
 
-  const addSkill = () => {
-    setSkills([
-      ...skills,
-      {
-        id: Date.now(),
-        name: "",
-        experience: "",
-        expertise: "Beginner",
-        description: "",
-      },
-    ]);
-  };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
+    setUserNameError("");
+    setEmailError("");
 
-  const removeSkill = (id) => {
-    setSkills(skills.filter((skill) => skill.id !== id));
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:5000/signup", {
+        userName,
+        firstName,
+        lastName,
+        email,
+        password,
+      });
+
+      if (response.status === 201) {
+        console.log("User registered successfully:", response.data);
+
+        const userData = { userName, firstName, lastName, email };
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        setShowPopup(true);
+
+        // Redirect to login page after 3 seconds
+        setTimeout(() => {
+          setShowPopup(false);
+          router.push("/login");
+        }, 3000);
+      }
+    } catch (error) {
+      if (error.response?.data?.message) {
+        const { message } = error.response.data;
+
+        if (message.includes("Username")) {
+          setUserNameError("This username is already taken. Please choose another.");
+        }
+        if (message.includes("Email")) {
+          setEmailError("This email is already registered. Please use a different email.");
+        }
+      } else {
+        console.error("Error response structure:", error.response);
+        setErrorMessage("Signup failed. Please try again.");
+      }
+    }
   };
 
   return (
-    <div className="w-full flex justify-center px-4">
-      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-6 md:p-10">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">
-          Skills Information
-        </h2>
+    <>
+      <h1 className="text-center text-4xl text-blue-500">Sign Up</h1>
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="max-w-md w-full p-8 border border-gray-300 rounded-lg shadow-lg bg-white">
+          <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+            Welcome User!
+          </h1>
 
-        {/* Dynamic Skills Fields */}
-        <div className="space-y-6">
-          {skills.map((skill) => (
-            <div key={skill.id} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Skill Name */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-gray-800 mb-2">User Name</label>
               <input
                 type="text"
-                placeholder="Skill Name"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={skill.name}
-                onChange={(e) => handleChange(skill.id, "name", e.target.value)}
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
-
-              {/* Experience */}
-              <input
-                type="text"
-                placeholder="Experience (years)"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={skill.experience}
-                onChange={(e) =>
-                  handleChange(skill.id, "experience", e.target.value)
-                }
-              />
-
-              {/* Expertise Level */}
-              <select
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={skill.expertise}
-                onChange={(e) =>
-                  handleChange(skill.id, "expertise", e.target.value)
-                }
-              >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Expert</option>
-              </select>
-
-              {/* Skill Description */}
-              <textarea
-                placeholder="Describe your skill (e.g., projects, proficiency, tools used)"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none h-24 md:col-span-3"
-                value={skill.description}
-                onChange={(e) =>
-                  handleChange(skill.id, "description", e.target.value)
-                }
-              />
-
-              {/* Remove Skill Button */}
-              {skills.length > 1 && (
-                <button
-                  onClick={() => removeSkill(skill.id)}
-                  className="md:col-span-3 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all"
-                >
-                  ✖ Remove
-                </button>
-              )}
+              {userNameError && <p className="text-orange-500 text-xs">{userNameError}</p>}
             </div>
-          ))}
-        </div>
 
-        {/* Add Skill Button */}
-          <button
-            onClick={addSkill}
-            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all mt-2"
+            <div className="flex space-x-4">
+              <div className="w-1/2">
+                <label className="block text-gray-800 mb-2">First Name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div className="w-1/2">
+                <label className="block text-gray-800 mb-2">Last Name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
 
-          >
-            + Add Skill
-          </button>
+            <div>
+              <label className="block text-gray-800 mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              />
+              {emailError && <p className="text-orange-500 text-xs">{emailError}</p>}
+            </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex flex-col md:flex-row justify-between gap-4 mt-8">
-          <button 
-           
-          className="w-full md:w-1/3 bg-gray-300 text-gray-700 px-5 py-3 rounded-lg hover:bg-gray-400 transition-all">
-            Back
-          </button>
-          <button className="w-full md:w-1/3 bg-blue-500 text-white px-5 py-3 rounded-lg hover:bg-blue-600 transition-all">
-            Next ➝
-          </button>
+            <div>
+              <label className="block text-gray-800 mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {errorMessage && <p className="text-orange-500 text-sm text-center">{errorMessage}</p>}
+
+            <button
+              type="submit"
+              className="w-full p-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Sign Up
+            </button>
+          </form>
         </div>
       </div>
-    </div>
+
+      {showPopup && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <p className="text-lg text-green-600">You have successfully signed up!</p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

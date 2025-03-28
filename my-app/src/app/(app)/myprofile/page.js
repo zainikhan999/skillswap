@@ -7,18 +7,40 @@ export default function UserProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+
+  
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/get-latest-profile")
-      .then((response) => {
+    const fetchProfile = async () => {
+      let parsedUser = null;
+  
+      if (typeof window !== "undefined") { 
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          parsedUser = JSON.parse(storedUser);
+        }
+      }
+  
+      if (!parsedUser || !parsedUser.userName) { 
+        setLoading(false);
+        return;
+      }
+  
+      try {
+        const response = await axios.get(`http://localhost:5000/get-latest-profile`, {
+          params: { username: parsedUser.userName } // Send username as a query param
+        });
+  
         setProfile(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching profile:", error);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+  
+    fetchProfile();
   }, []);
+  
 
   if (loading) return <div className="text-center mt-10 text-lg">Loading...</div>;
 

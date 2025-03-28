@@ -105,46 +105,49 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Route to handle skill form submission
 app.post("/submit-profile", async (req, res) => {
-    const { name, city, contactNumber, bio, skills } = req.body;
-  
-    if (!name || !city || !contactNumber || !bio || !skills || !Array.isArray(skills)) {
-      return res.status(400).json({ message: "All fields are required and skills must be an array" });
-    }
-  
-    try {
-      const newProfile = new SkillForm({
-        name,
-        city,
-        contactNumber,
-        bio,
-        skills,
-      });
-  
-      await newProfile.save();
-      res.status(201).json({ message: "Profile submitted successfully" });
-    } catch (error) {
-      console.error("Error submitting profile:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  const { name, username, city, contactNumber, bio, skills } = req.body;
+
+  if (!name || !username || !city || !contactNumber || !bio || !skills || !Array.isArray(skills)) {
+    return res.status(400).json({ message: "All fields are required, and skills must be an array" });
+  }
+
+  try {
+    const newProfile = new SkillForm({ name, username, city, contactNumber, bio, skills });
+    await newProfile.save();
+    res.status(201).json({ message: "Profile submitted successfully" });
+  } catch (error) {
+    console.error("Error submitting profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 
-// the endpoint for the profile form
+
+
+
+// Route to fetch the profile of the logged-in user
 app.get("/get-latest-profile", async (req, res) => {
     try {
-      const latestProfile = await SkillForm.findOne().sort({ _id: -1 }); // Fetch the latest profile
-      if (!latestProfile) {
-        return res.status(404).json({ message: "No profile found" });
-      }
-      res.json(latestProfile);
+        const { username } = req.query; // Get username from query params
+  
+        if (!username) {
+            return res.status(400).json({ message: "Username is required." });
+        }
+  
+        const userProfile = await SkillForm.findOne({ username }); // Find by provided username
+        if (!userProfile) {
+            return res.status(404).json({ message: "Profile not found for this user" });
+        }
+  
+        res.json(userProfile);
     } catch (error) {
-      console.error("Error fetching profile:", error);
-      res.status(500).json({ message: "Internal server error" });
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
   });
   
+
 app.get("/", (req, res) => {
   res.send("Backend is working!");
 });

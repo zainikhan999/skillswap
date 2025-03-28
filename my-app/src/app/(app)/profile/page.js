@@ -69,17 +69,27 @@
 //   );
 // }
 "use client"
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import axios from "axios";
 
 export default function ProfileForm() {
   const [formData, setFormData] = useState({
     name: "",
+    username: "", // Initially empty
     city: "",
     contactNumber: "",
     bio: "",
-    skills: [""], // Initial empty skill
+    skills: [""], 
   });
+  useEffect(() => {
+    if (typeof window !== "undefined") { // Ensure it's running on the client
+      const storedUser = localStorage.getItem("user"); 
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setFormData((prev) => ({ ...prev, username: parsedUser.userName || "" }));
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -115,6 +125,15 @@ export default function ProfileForm() {
         <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">
           Profile Information
         </h2>
+
+        {/* Username Field (Auto-Filled) */}
+      <input
+        type="text"
+        name="username"
+        value={formData.username}
+        className="w-full p-3 border border-gray-300 rounded-lg bg-gray-200"
+        readOnly
+      />
 
         {/* Input Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
