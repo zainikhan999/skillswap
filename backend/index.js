@@ -6,7 +6,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 
 const skillswapuser = require('./Model/User');  // Import User model
-// const Payment = require('./Model/Payment');  // Import the Payment model
+const SkillForm = require('./Model/SkillForm'); // Import SkillForm model
 
 const app = express();
 app.use(cors());
@@ -104,6 +104,50 @@ app.post('/login', async (req, res) => {
         return res.status(500).json({ message: 'Server error' });
     }
 });
+
+app.post("/submit-profile", async (req, res) => {
+  const { name, username, city, contactNumber, bio, skills } = req.body;
+
+  if (!name || !username || !city || !contactNumber || !bio || !skills || !Array.isArray(skills)) {
+    return res.status(400).json({ message: "All fields are required, and skills must be an array" });
+  }
+
+  try {
+    const newProfile = new SkillForm({ name, username, city, contactNumber, bio, skills });
+    await newProfile.save();
+    res.status(201).json({ message: "Profile submitted successfully" });
+  } catch (error) {
+    console.error("Error submitting profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
+
+
+// Route to fetch the profile of the logged-in user
+app.get("/get-latest-profile", async (req, res) => {
+    try {
+        const { username } = req.query; // Get username from query params
+  
+        if (!username) {
+            return res.status(400).json({ message: "Username is required." });
+        }
+  
+        const userProfile = await SkillForm.findOne({ username }); // Find by provided username
+        if (!userProfile) {
+            return res.status(404).json({ message: "Profile not found for this user" });
+        }
+  
+        res.json(userProfile);
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+
 app.get("/", (req, res) => {
   res.send("Backend is working!");
 });

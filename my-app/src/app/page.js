@@ -1,30 +1,30 @@
-"use client";
+'use client';
 import React, { useState, useEffect } from 'react';
-import CreateGig from './components/createGig'; // Or createSkill.js
-import GigList from './components/gigList'; // Or skillList.js
+import CreateGig from './components/createGig';
+import GigList from './components/gigList';
 
-export default function Main() {
+export default function CombinedPage() { // Renamed for clarity
   const [skills, setSkills] = useState([]);
-  const [loading, setLoading] = useState(true); // Added loading state
-  const [error, setError] = useState(null); // Added error state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [postError, setPostError] = useState(null);
 
   const fetchSkills = async () => {
-    setLoading(true); // Set loading to true before fetching
-    setError(null); // Clear previous errors
-
+    setLoading(true);
+    setError(null);
     try {
-      const response = await fetch("/api/skills");
+      const response = await fetch('/api/skills');
       if (response.ok) {
         const data = await response.json();
         setSkills(data);
       } else {
-        setError(`Failed to fetch skills: ${response.statusText}`); // Set error message
+        setError(`Failed to fetch skills: ${response.statusText}`);
       }
     } catch (err) {
-      setError("Error fetching skills. Please try again."); // Set generic error
-      console.error("Error fetching skills:", err);
+      setError('Error fetching skills. Please try again.');
+      console.error('Error fetching skills:', err);
     } finally {
-      setLoading(false); // Set loading to false after fetching
+      setLoading(false);
     }
   };
 
@@ -37,23 +37,50 @@ export default function Main() {
     fetchSkills();
   };
 
+  const handleClick = async () => {
+    setPostError(null);
+    let data = { name: 'John', age: 25 };
+    try {
+      const response = await fetch('/api/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        console.log(result);
+      } else {
+        setPostError(`Failed to post data: ${response.statusText}`);
+      }
+    } catch (err) {
+      setPostError('Error posting data. Please try again.');
+      console.error('Error in handleClick', err);
+    }
+  };
+
   if (loading) {
-    return <div>Loading skills...</div>; // Display loading message
+    return <div>Loading skills...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>; // Display error message
+    return <div>Error: {error}</div>;
   }
 
   return (
     <div>
-      <h1 className='bg-red-400'>Welcome to Skill Swap</h1>
+      <h1 className="bg-red-400">Welcome to Skill Swap</h1>
       <CreateGig addSkill={addSkill} />
       {skills.length > 0 ? (
-        <GigList skills={skills} /> // Display skills if available
+        <GigList skills={skills} />
       ) : (
-        <div>No skills available.</div> // Display message if no skills
+        <div>No skills available.</div>
       )}
+
+      <h1 className="bg-amber-600">Home</h1>
+      <button onClick={handleClick}>Click ME</button>
+      {postError && <div style={{ color: 'red' }}>{postError}</div>}
     </div>
   );
 }

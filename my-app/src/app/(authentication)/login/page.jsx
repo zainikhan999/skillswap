@@ -4,7 +4,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation"; // Import useRouter
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [userName, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter(); // Initialize useRouter
@@ -15,7 +15,7 @@ export default function Login() {
 
     try {
       const response = await axios.post("http://localhost:5000/login", {
-        userName: username,
+        userName,
         password,
       });
 
@@ -23,7 +23,11 @@ export default function Login() {
       console.log("Login Response:", response.data);
 
       // Store only the username in localStorage
-      localStorage.setItem("user", JSON.stringify({ userName: username }));
+      const userData = { userName };
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // // Store only the username in localStorage
+      // localStorage.setItem("user", JSON.stringify({ userName: username }));
 
       // Navigate based on userType
       if (userType === "user") {
@@ -49,7 +53,7 @@ export default function Login() {
             <label className="block text-black mb-2">Username:</label>
             <input
               type="text"
-              value={username}
+              value={userName}
               onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-primaryButton"

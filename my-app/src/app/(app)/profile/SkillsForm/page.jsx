@@ -18,9 +18,10 @@ export default function SignUp() {
 
   // Redirect user if already logged in
   useEffect(() => {
-    // Store only the username in localStorage
-    const userData = { userName };
-    localStorage.setItem('user', JSON.stringify(userData));
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      router.push("/main"); // Redirect to main page
+    }
   }, []);
 
   const handleSubmit = async (event) => {
@@ -54,7 +55,7 @@ export default function SignUp() {
         // Redirect to login page after 3 seconds
         setTimeout(() => {
           setShowPopup(false);
-          router.push("/main");
+          router.push("/login");
         }, 3000);
       }
     } catch (error) {
