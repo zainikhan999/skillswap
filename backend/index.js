@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 
 const skillswapuser = require('./Model/User');  // Import User model
 const SkillForm = require('./Model/SkillForm'); // Import SkillForm model
-
+const Services=require('./Model/Services');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -106,25 +106,23 @@ app.post('/login', async (req, res) => {
 });
 
 app.post("/submit-profile", async (req, res) => {
-  const { name, username, city, contactNumber, bio, skills } = req.body;
-
-  if (!name || !username || !city || !contactNumber || !bio || !skills || !Array.isArray(skills)) {
-    return res.status(400).json({ message: "All fields are required, and skills must be an array" });
-  }
-
-  try {
-    const newProfile = new SkillForm({ name, username, city, contactNumber, bio, skills });
-    await newProfile.save();
-    res.status(201).json({ message: "Profile submitted successfully" });
-  } catch (error) {
-    console.error("Error submitting profile:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-
-
-
+    const { name, username, city, contactNumber, bio, skills, profileImage } = req.body;
+  
+    console.log("Received profileImage:", profileImage); // Log to check if the image URL is received
+    if (!name || !username || !city || !contactNumber || !bio || !skills || !profileImage || !Array.isArray(skills)) {
+      return res.status(400).json({ message: "All fields are required, and skills must be an array" });
+    }
+  
+    try {
+      const newProfile = new SkillForm({ name, username, city, contactNumber, bio, profileImage, skills });
+      await newProfile.save();
+      res.status(201).json({ message: "Profile submitted successfully" });
+    } catch (error) {
+      console.error("Error submitting profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
 
 // Route to fetch the profile of the logged-in user
 app.get("/get-latest-profile", async (req, res) => {
@@ -146,8 +144,45 @@ app.get("/get-latest-profile", async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
   });
+
   
 
+  // Route to upload a gig
+  app.post("/upload-service", async (req, res) => {
+    try {
+      const { skillName, skillDescription, swapscount, exchangeService, username } = req.body;
+      
+      const newGig = new Services({
+        skillName,
+        skillDescription,
+        swapscount,
+        exchangeService,
+        username,
+      });
+      
+      await newGig.save();
+      res.status(200).json({ message: "Gig uploaded successfully!" });
+    } catch (error) {
+      console.error("Error uploading gig:", error);
+      res.status(500).json({
+        error: "Failed to upload gig",
+        message: error.message, // Send detailed error message
+        stack: error.stack,     // Optionally include stack trace for better debugging
+      });
+    }
+  });
+  
+// Add this to your backend
+app.get("/get-all-gigs", async (req, res) => {
+   try {
+      const gigs = await Services.find(); // fetch all gigs
+      res.json(gigs);
+    } catch (error) {
+      console.error("Error fetching gigs:", error);
+      res.status(500).json({ error: "Failed to fetch gigs" });
+    }
+  });
+  
 app.get("/", (req, res) => {
   res.send("Backend is working!");
 });
@@ -155,4 +190,3 @@ app.get("/", (req, res) => {
 app.listen(5000, () => {
     console.log("Backend server running on port 5000S");
 });
-

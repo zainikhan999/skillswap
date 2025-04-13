@@ -1,0 +1,34 @@
+const mongoose = require("mongoose");
+
+const ServicesSchema = new mongoose.Schema({
+  skillName: {
+    type: String,
+    required: true,
+  },
+
+  swapscount: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
+
+  skillDescription: {
+    type: String,
+    required: true,
+    minlength: [10, "Description must be at least 10 characters long"],
+  },
+
+  exchangeService: {
+    type: String, // Service user wants in exchange
+    required: true,
+  },
+  username: {
+    type: String, // Store the username here
+    required: true,
+  }
+});
+
+
+const Services = mongoose.model("Services", ServicesSchema);
+
+module.exports = Services;
