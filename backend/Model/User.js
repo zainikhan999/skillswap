@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-// This schema is for signup user 
+import mongoose from "mongoose";
+// This schema is for signup user
 const UserSchema = new mongoose.Schema(
   {
     userName: {
@@ -7,7 +7,6 @@ const UserSchema = new mongoose.Schema(
       required: true,
       trim: true,
       unique: true,
-
     },
     firstName: {
       type: String,
@@ -31,10 +30,9 @@ const UserSchema = new mongoose.Schema(
       required: true,
       minlength: 8,
     },
-   
   },
-  { timestamps: true }    //to show user time when it filled the form
+  { timestamps: true } //to show user time when it filled the form
 );
 
-const skillswapuser = mongoose.model('skillswapuser', UserSchema);
-module.exports = skillswapuser;
+const skillswapuser = mongoose.model("skillswapuser", UserSchema);
+export default skillswapuser;

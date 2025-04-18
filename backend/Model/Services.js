@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ServicesSchema = new mongoose.Schema({
   skillName: {
@@ -25,10 +25,9 @@ const ServicesSchema = new mongoose.Schema({
   username: {
     type: String, // Store the username here
     required: true,
-  }
+  },
 });
-
 
 const Services = mongoose.model("Services", ServicesSchema);
 
-module.exports = Services;
+export default Services;

@@ -1,4 +1,4 @@
-import Progresstracker from '@/app/components/Progresstracker';
+import Progresstracker from "../../components/Progresstracker";
 
 export default function Layout({ children }) {
   return (

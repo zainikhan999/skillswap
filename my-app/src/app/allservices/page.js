@@ -9,15 +9,20 @@ const AllGigs = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [filteredGigs, setFilteredGigs] = useState([]);
-  const router = useRouter(); 
+  const router = useRouter();
 
   useEffect(() => {
     const fetchGigsAndProfiles = async () => {
       try {
-        const { data: gigList } = await axios.get("http://localhost:5000/get-all-gigs");
+        const { data: gigList } = await axios.get(
+          "http://localhost:5000/get-all-gigs"
+        );
 
         // Derive categories from skillName
-        const uniqueSkillNames = ["All", ...new Set(gigList.map((gig) => gig.skillName))];
+        const uniqueSkillNames = [
+          "All",
+          ...new Set(gigList.map((gig) => gig.skillName)),
+        ];
         setCategories(uniqueSkillNames);
 
         // For each gig, get the profile
@@ -25,7 +30,9 @@ const AllGigs = () => {
         await Promise.all(
           gigList.map(async (gig) => {
             if (!profilesData[gig.username]) {
-              const res = await axios.get(`http://localhost:5000/get-latest-profile?username=${gig.username}`);
+              const res = await axios.get(
+                `http://localhost:5000/get-latest-profile?username=${gig.username}`
+              );
               profilesData[gig.username] = res.data;
             }
           })
@@ -54,11 +61,8 @@ const AllGigs = () => {
   };
 
   // Handle redirect to messages
-  const handleSwapRequest = (username) => {
-    // Redirect to the messages page, passing the username as a query parameter (if needed)
-    router.push(`http://localhost:3000/messages`);
-    // Or, if you want to navigate using `window.location.href`
-    // window.location.href = `http://localhost:3000/messages?username=${username}`;
+  const handleSwapRequest = (recipientUsername) => {
+    router.push(`/messages?recipient=${recipientUsername}`);
   };
 
   return (
@@ -106,10 +110,16 @@ const AllGigs = () => {
                   </p>
                 </div>
 
-                <h3 className="text-xl font-bold text-green-600 mb-4">{gig.skillName}</h3>
+                <h3 className="text-xl font-bold text-green-600 mb-4">
+                  {gig.skillName}
+                </h3>
                 <p className="text-gray-700 mb-4">{gig.skillDescription}</p>
-                <p className="text-sm text-gray-500 mb-2"><strong>Exchange For:</strong> {gig.exchangeService}</p>
-                <p className="text-sm text-gray-500"><strong>Swaps:</strong> {gig.swapscount}</p>
+                <p className="text-sm text-gray-500 mb-2">
+                  <strong>Exchange For:</strong> {gig.exchangeService}
+                </p>
+                <p className="text-sm text-gray-500">
+                  <strong>Swaps:</strong> {gig.swapscount}
+                </p>
 
                 {/* Request Swap Button */}
                 <button
@@ -123,7 +133,9 @@ const AllGigs = () => {
           })}
         </div>
       ) : (
-        <p className="text-center text-gray-500 mt-6">No gigs found for this category.</p>
+        <p className="text-center text-gray-500 mt-6">
+          No gigs found for this category.
+        </p>
       )}
     </div>
   );

@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const SkillFormSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
-  username:{
+  username: {
     type: String,
     required: true,
     unique: true,
@@ -35,4 +35,4 @@ const SkillFormSchema = new mongoose.Schema({
 
 const SkillForm = mongoose.model("SkillForm", SkillFormSchema);
 
-module.exports = SkillForm;
+export default SkillForm;
