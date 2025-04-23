@@ -10,6 +10,7 @@ import { errorMiddleware } from "./middleware/error.js"; // Import your error mi
 import Message from "./Model/Message.js";
 import ChatRoom from "./Model/ChatRoom.js";
 import Notification from "./Model/Notification.js";
+import SwapDetails from "./Model/SwapDetails.js";
 dotenv.config();
 const envMode = process.env.NODE_ENV || "DEVELOPMENT";
 const MONGO_URI = process.env.MONGO_URI;
@@ -199,6 +200,137 @@ app.post("/message/seen", (req, res) => {
       console.error("Error updating message status:", err);
       res.status(500).json({ error: "Failed to update message status" });
     });
+});
+
+app.post("/swapform", async (req, res) => {
+  const {
+    taskId,
+    currentUser,
+    recipient,
+    taskName,
+    timeRequired,
+    description,
+    deadline,
+  } = req.body;
+
+  try {
+    // Check if any field is empty
+    if (
+      !taskId ||
+      !currentUser ||
+      !recipient ||
+      !taskName ||
+      !timeRequired ||
+      !description ||
+      !deadline
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "All fields must be filled.",
+      });
+    }
+
+    // Check if taskId already has 2 documents
+    const existingEntries = await SwapDetails.find({ taskId });
+
+    if (existingEntries.length >= 2) {
+      return res.status(400).json({
+        success: false,
+        error: "This task ID already has two swap entries.",
+      });
+    }
+
+    // Save new swap document
+    const swapDetails = new SwapDetails({
+      taskId,
+      currentUser,
+      recipient,
+      taskName,
+      timeRequired,
+      description,
+      deadline,
+    });
+
+    await swapDetails.save();
+
+    res.status(201).json({ success: true, swapDetails });
+  } catch (error) {
+    console.error("Error saving swap details:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+app.get("/get-swap-tasks", async (req, res) => {
+  const currentUser = req.query.currentUser;
+  // fetch the task id for the current user
+  try {
+    const tasks = await SwapDetails.find({ currentUser });
+    //match the task idwith other user dcouments in db
+    const taskIds = tasks.map((task) => task.taskId);
+
+    const otherUserTasks = await SwapDetails.find({
+      taskId: { $in: taskIds },
+      recipient: currentUser,
+    });
+
+    // now pass these tasks to the front end
+    if (!tasks || tasks.length === 0) {
+      return res.status(404).json({ success: false, error: "No tasks found" });
+    }
+
+    const allTasks = [...tasks, ...otherUserTasks];
+
+    res.status(200).json({ success: true, tasks: allTasks });
+  } catch (error) {
+    console.error("Error fetching swap tasks:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/confirm-task", async (req, res) => {
+  const { taskId, currentUser } = req.body;
+
+  try {
+    // Find all tasks with that taskId
+    const tasks = await SwapDetails.find({ taskId });
+
+    // Find the task that matches the current user
+    const userTask = tasks.find((task) => task.currentUser === currentUser);
+
+    if (!userTask)
+      return res.json({
+        success: false,
+        message: "Task not found for this user.",
+      });
+
+    userTask.isConfirmed = true;
+    await userTask.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+app.post("/delete-task", async (req, res) => {
+  const { taskId } = req.body;
+
+  try {
+    // Delete all tasks with the same taskId
+    const deletedTasks = await SwapDetails.deleteMany({ taskId });
+
+    if (deletedTasks.deletedCount === 0) {
+      return res.json({
+        success: false,
+        message: "No tasks found with the given taskId",
+      });
+    }
+
+    res.json({ success: true, deletedCount: deletedTasks.deletedCount });
+  } catch (error) {
+    console.error("Error deleting tasks:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 // error middle ware at the end

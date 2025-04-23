@@ -1,41 +1,45 @@
 import mongoose from "mongoose";
 
-const SwapDetailsSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
+const SwapDetailsSchema = new mongoose.Schema(
+  {
+    taskId: {
+      type: String,
+      required: true,
+    },
+    currentUser: {
+      type: String,
+      required: true,
+    },
+    recipient: {
+      type: String,
+      required: true,
+    },
+    taskName: {
+      type: String,
+      required: true,
+    },
+    timeRequired: {
+      type: Number,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    deadline: {
+      type: Date,
+      required: true,
+    },
+    isConfirmed: {
+      type: Boolean,
+      default: false,
+    },
   },
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  city: {
-    type: String,
-    required: true,
-  },
-  country: {
-    type: String,
-    default: "Pakistan",
-    immutable: true,
-  },
-  contactNumber: {
-    type: String,
-    required: true,
-  },
-  bio: {
-    type: String,
-    required: true,
-  },
-  skills: {
-    type: [String],
-    required: true,
-  },
-  profileImage: {
-    type: String,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
-const SwapDetails = mongoose.model("SwapDEeails", SwapDetailsSchema);
+const SwapDetails = mongoose.model("swapdetails", SwapDetailsSchema);
 
 export default SwapDetails;

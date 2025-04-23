@@ -298,30 +298,29 @@ export default function MessagingApp() {
                 {recipient}
               </div>
             </div>
-            {!swapAccepted && (
-              <button
-                onClick={handleSwapAcceptance}
-                style={{
-                  backgroundColor: "white",
-                  color: "#047857", // Tailwind's green-700 hex
-                  padding: "0.5rem 1rem", // Equivalent to px-4 py-2
-                  borderRadius: "9999px", // Fully rounded (rounded-full)
-                  border: "1px solid #D1D5DB", // Tailwind's gray-300
-                  fontSize: "0.875rem", // text-sm
-                  fontWeight: 500,
-                  transition: "all 0.3s ease-in-out",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#F3F4F6")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "white")
-                }
-              >
-                Accept Swap
-              </button>
-            )}
+
+            <button
+              onClick={handleSwapAcceptance}
+              style={{
+                backgroundColor: "white",
+                color: "#047857", // Tailwind's green-700 hex
+                padding: "0.5rem 1rem", // Equivalent to px-4 py-2
+                borderRadius: "9999px", // Fully rounded (rounded-full)
+                border: "1px solid #D1D5DB", // Tailwind's gray-300
+                fontSize: "0.875rem", // text-sm
+                fontWeight: 500,
+                transition: "all 0.3s ease-in-out",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#F3F4F6")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "white")
+              }
+            >
+              Accept Swap
+            </button>
           </div>
 
           {/* Messages */}
