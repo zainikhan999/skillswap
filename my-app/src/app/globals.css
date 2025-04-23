@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
 }
 
 @theme inline {
@@ -24,5 +24,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
-  padding-top: 60px; 
+  padding-top: 60px;
+}
+
+button {
+  background-color: #22c55e; /* Tailwind green-500 */
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 9999px; /* Fully rounded pill style */
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: #16a34a; /* Slightly darker green on hover */
+  transform: translateY(-1px);
+}
+
+button:active {
+  background-color: #15803d; /* Even deeper on click */
+  transform: translateY(0);
 }

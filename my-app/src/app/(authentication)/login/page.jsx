@@ -14,7 +14,7 @@ export default function Login() {
     setErrorMessage(""); // Clear any previous error messages
 
     try {
-      const response = await axios.post("http://localhost:5000/login", {
+      const response = await axios.post("http://localhost:5000/api/login", {
         userName,
         password,
       });
@@ -24,7 +24,7 @@ export default function Login() {
 
       // Store only the username in localStorage
       const userData = { userName };
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
 
       // // Store only the username in localStorage
       // localStorage.setItem("user", JSON.stringify({ userName: username }));
@@ -34,10 +34,15 @@ export default function Login() {
         router.push("/main"); // Redirect only if login is successful
       }
     } catch (error) {
-      if (error.response) {
-        setErrorMessage(error.response.data.message || "Login failed");
+      console.log("Error response:", error.response?.data);
+
+      const data = error.response?.data;
+
+      // Check if it's a message object
+      if (data && typeof data === "object" && "message" in data) {
+        setErrorMessage(data.message);
       } else {
-        setErrorMessage("Server error");
+        setErrorMessage("Login Failed.Please try again.");
       }
     }
   };

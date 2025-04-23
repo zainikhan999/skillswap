@@ -8,7 +8,7 @@ export default function GigUpload() {
     skillName: "",
     skillDescription: "",
     exchangeService: "",
-    username: "" // Username is now part of formData
+    username: "", // Username is now part of formData
   });
 
   const [loading, setLoading] = useState(true); // To manage loading state
@@ -17,7 +17,7 @@ export default function GigUpload() {
     const fetchProfile = async () => {
       let parsedUser = null;
 
-      if (typeof window !== "undefined") { 
+      if (typeof window !== "undefined") {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           parsedUser = JSON.parse(storedUser);
@@ -25,20 +25,23 @@ export default function GigUpload() {
         }
       }
 
-      if (!parsedUser || !parsedUser.userName) { 
+      if (!parsedUser || !parsedUser.userName) {
         setLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get(`http://localhost:5000/get-latest-profile`, {
-          params: { username: parsedUser.userName } // Send username as a query param
-        });
+        const response = await axios.get(
+          `http://localhost:5000/api/get-latest-profile`,
+          {
+            params: { username: parsedUser.userName }, // Send username as a query param
+          }
+        );
 
         // Set the username in form data after fetching the profile
-        setFormData(prevFormData => ({
+        setFormData((prevFormData) => ({
           ...prevFormData,
-          username: parsedUser.userName // Directly set username in formData
+          username: parsedUser.userName, // Directly set username in formData
         }));
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -59,12 +62,12 @@ export default function GigUpload() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Attach username to form data (already included in state after useEffect)
     const gigData = { ...formData };
-  
+
     try {
-      await axios.post("http://localhost:5000/upload-service", gigData);
+      await axios.post("http://localhost:5000/api/upload-service", gigData);
       alert("Gig uploaded successfully!");
       setFormData({
         skillName: "",
@@ -89,9 +92,10 @@ export default function GigUpload() {
 
   return (
     <div className="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-6 mt-10">
-      <p>User name: {localStr.userName}</p> {/* Safely access userName */}
-      <h2 className="text-2xl font-semibold mb-4">Upload Your Gig</h2>
-
+      {/* <p>User name: {localStr.userName}</p> Safely access userName */}
+      <h2 className="text-2xl font-semibold mb-4 text-center">
+        Offer Your Service
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -122,7 +126,10 @@ export default function GigUpload() {
           className="w-full p-2 border rounded"
         />
 
-        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
           Upload Gig
         </button>
       </form>

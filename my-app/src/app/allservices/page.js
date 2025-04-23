@@ -15,7 +15,7 @@ const AllGigs = () => {
     const fetchGigsAndProfiles = async () => {
       try {
         const { data: gigList } = await axios.get(
-          "http://localhost:5000/get-all-gigs"
+          "http://localhost:5000/api/get-all-gigs"
         );
 
         // Derive categories from skillName
@@ -31,7 +31,7 @@ const AllGigs = () => {
           gigList.map(async (gig) => {
             if (!profilesData[gig.username]) {
               const res = await axios.get(
-                `http://localhost:5000/get-latest-profile?username=${gig.username}`
+                `http://localhost:5000/api/get-latest-profile?username=${gig.username}`
               );
               profilesData[gig.username] = res.data;
             }

@@ -1,19 +1,28 @@
 "use client";
+import { FaUserCircle } from "react-icons/fa"; // Import the icon
 import { useState, useEffect } from "react";
 import axios from "axios";
+
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dnmhfubvn/image/upload";
+const UPLOAD_PRESET = "displaypicture";
 
 export default function ProfileForm() {
   const [formData, setFormData] = useState({
     name: "",
-    username: "", // Initially empty
+    username: "",
     city: "",
+    country: "Pakistan", // Add this
     contactNumber: "",
     bio: "",
     skills: [""],
+    profileImage: "", // Add profile picture URL to formData
   });
+
+  const [image, setImage] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Ensure it's running on the client
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
@@ -24,6 +33,29 @@ export default function ProfileForm() {
       }
     }
   }, []);
+
+  const handleFileChange = (e) => {
+    setImage(e.target.files[0]);
+  };
+
+  const uploadImage = async () => {
+    if (!image) return alert("Please select an image!");
+
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    try {
+      const response = await axios.post(CLOUDINARY_URL, formData);
+      const uploadedImageUrl = response.data.secure_url;
+
+      setImageUrl(uploadedImageUrl);
+      setFormData((prev) => ({ ...prev, profileImage: uploadedImageUrl }));
+      alert("Profile picture uploaded successfully!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -45,10 +77,33 @@ export default function ProfileForm() {
   };
 
   const handleSubmit = async () => {
+    const filteredSkills = formData.skills.filter(
+      (skill) => skill.trim() !== ""
+    );
+
+    const updatedData = {
+      ...formData,
+      skills: filteredSkills,
+      country: "Pakistan",
+    };
+    console.log(updatedData);
+    // Include country in the validation too
+    if (
+      !updatedData.name ||
+      !updatedData.city ||
+      !updatedData.country ||
+      !updatedData.contactNumber ||
+      !updatedData.bio ||
+      filteredSkills.length === 0
+    ) {
+      alert("All fields are required, and at least one skill must be provided");
+      return;
+    }
+
     try {
       const response = await axios.post(
-        "http://localhost:5000/submit-profile",
-        formData
+        "http://localhost:5000/api/submit-profile",
+        updatedData
       );
       alert(response.data.message);
     } catch (error) {
@@ -62,17 +117,38 @@ export default function ProfileForm() {
         <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">
           Profile Information
         </h2>
+        {/* Profile Picture Upload Section */}
+        <div className="mb-6 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            {/* Check if imageUrl exists; if not, show the default avatar icon */}
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover"
+              />
+            ) : (
+              <FaUserCircle className="text-gray-400 w-24 h-24" /> // Display icon when no image is uploaded
+            )}
+          </div>
 
-        {/* Username Field (Auto-Filled) */}
+          <div className="flex flex-col items-end">
+            <input type="file" onChange={handleFileChange} className="mb-2" />
+            <button
+              onClick={uploadImage}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Upload Picture
+            </button>
+          </div>
+        </div>
         <input
           type="text"
           name="username"
           value={formData.username}
-          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-200"
+          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-200 mb-7"
           readOnly
         />
-
-        {/* Input Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input
             type="text"
@@ -82,7 +158,6 @@ export default function ProfileForm() {
             onChange={handleChange}
             value={formData.name}
           />
-
           <input
             type="text"
             name="city"
@@ -91,7 +166,6 @@ export default function ProfileForm() {
             onChange={handleChange}
             value={formData.city}
           />
-
           <input
             type="text"
             name="country"
@@ -99,7 +173,6 @@ export default function ProfileForm() {
             className="w-full p-3 border border-gray-300 rounded-lg bg-gray-200"
             readOnly
           />
-
           <input
             type="text"
             name="contactNumber"
@@ -109,8 +182,6 @@ export default function ProfileForm() {
             value={formData.contactNumber}
           />
         </div>
-
-        {/* Bio Field */}
         <div className="mt-6">
           <textarea
             name="bio"
@@ -120,8 +191,6 @@ export default function ProfileForm() {
             value={formData.bio}
           />
         </div>
-
-        {/* Skills Section */}
         <div className="mt-6">
           <label className="block text-gray-700 font-semibold mb-2">
             Skills
@@ -137,21 +206,16 @@ export default function ProfileForm() {
               />
               <button
                 onClick={() => removeSkill(index)}
-                className="bg-red-500 text-white px-3 py-1 rounded-lg"
+                style={{ backgroundColor: "#f56565", color: "white" }}
+                className="px-3 py-1 rounded-full text-sm"
               >
                 ✕
               </button>
             </div>
           ))}
-          <button
-            onClick={addSkill}
-            className="bg-blue-500 text-white px-3 py-1 rounded-lg"
-          >
-            + Add Skill
-          </button>
+          <button onClick={addSkill}>+ Add Skill</button>
         </div>
 
-        {/* Submit Button */}
         <div className="flex justify-items-end gap-6 mt-8">
           <button
             onClick={handleSubmit}

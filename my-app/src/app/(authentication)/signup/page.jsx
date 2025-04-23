@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import axios from "axios";
-
+import Link from "next/link";
 export default function SignUp() {
-  const router = useRouter(); 
+  const router = useRouter();
 
   const [userName, setUserName] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -20,22 +20,15 @@ export default function SignUp() {
   useEffect(() => {
     // Store only the username in localStorage
     const userData = { userName };
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
   }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setErrorMessage("");
-    setUserNameError("");
-    setEmailError("");
-
-    if (password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.");
-      return;
-    }
+    setErrorMessage(""); // Clear any general error messages
 
     try {
-      const response = await axios.post("http://localhost:5000/signup", {
+      const response = await axios.post("http://localhost:5000/api/signup", {
         userName,
         firstName,
         lastName,
@@ -45,10 +38,8 @@ export default function SignUp() {
 
       if (response.status === 201) {
         console.log("User registered successfully:", response.data);
-
         const userData = { userName, firstName, lastName, email };
         localStorage.setItem("user", JSON.stringify(userData));
-
         setShowPopup(true);
 
         // Redirect to login page after 3 seconds
@@ -58,26 +49,27 @@ export default function SignUp() {
         }, 3000);
       }
     } catch (error) {
-      if (error.response?.data?.message) {
-        const { message } = error.response.data;
+      console.log("Error response:", error.response?.data);
 
-        if (message.includes("Username")) {
-          setUserNameError("This username is already taken. Please choose another.");
-        }
-        if (message.includes("Email")) {
-          setEmailError("This email is already registered. Please use a different email.");
-        }
+      const data = error.response?.data;
+
+      // Check if it's a message object
+      if (data && typeof data === "object" && "message" in data) {
+        setErrorMessage(data.message);
       } else {
-        console.error("Error response structure:", error.response);
         setErrorMessage("Signup failed. Please try again.");
       }
     }
   };
 
+  // Error message state for multiple fields
+  const [errorMessages, setErrorMessages] = useState({});
+
   return (
     <>
-      <h1 className="text-center text-4xl text-blue-500">Sign Up</h1>
-      <div className="flex items-center justify-center h-screen bg-gray-100">
+      <h1 className="text-center text-4xl text-blue-500 mt-12">Sign Up</h1>
+
+      <div className="flex items-center justify-center h-screen">
         <div className="max-w-md w-full p-8 border border-gray-300 rounded-lg shadow-lg bg-white">
           <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
             Welcome User!
@@ -93,7 +85,11 @@ export default function SignUp() {
                 required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
-              {userNameError && <p className="text-orange-500 text-xs">{userNameError}</p>}
+              {errorMessages.userName && (
+                <p className="text-orange-500 text-xs">
+                  {errorMessages.userName}
+                </p>
+              )}
             </div>
 
             <div className="flex space-x-4">
@@ -128,7 +124,9 @@ export default function SignUp() {
                 required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
-              {emailError && <p className="text-orange-500 text-xs">{emailError}</p>}
+              {errorMessages.email && (
+                <p className="text-orange-500 text-xs">{errorMessages.email}</p>
+              )}
             </div>
 
             <div>
@@ -140,16 +138,26 @@ export default function SignUp() {
                 required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
+              {errorMessages.password && (
+                <p className="text-orange-500 text-xs">
+                  {errorMessages.password}
+                </p>
+              )}
             </div>
 
-            {errorMessage && <p className="text-orange-500 text-sm text-center">{errorMessage}</p>}
+            {errorMessage && (
+              <p className="text-orange-500 text-sm text-center">
+                {errorMessage}
+              </p>
+            )}
 
-            <button
-              type="submit"
-              className="w-full p-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Sign Up
-            </button>
+            <button type="submit">Sign Up</button>
+            <p className="text-center">
+              Already have an account?{" "}
+              <Link href="/login">
+                <span className="text-blue-500 cursor-pointer">Login</span>
+              </Link>
+            </p>
           </form>
         </div>
       </div>
@@ -157,7 +165,9 @@ export default function SignUp() {
       {showPopup && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-            <p className="text-lg text-green-600">You have successfully signed up!</p>
+            <p className="text-lg text-green-600">
+              You have successfully signed up!
+            </p>
           </div>
         </div>
       )}

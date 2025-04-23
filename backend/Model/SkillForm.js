@@ -31,6 +31,9 @@ const SkillFormSchema = new mongoose.Schema({
     type: [String],
     required: true,
   },
+  profileImage: {
+    type: String,
+  },
 });
 
 const SkillForm = mongoose.model("SkillForm", SkillFormSchema);

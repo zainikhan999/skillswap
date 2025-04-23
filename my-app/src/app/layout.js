@@ -1,22 +1,16 @@
-import Navbar from "./components/navbar"; 
-import '../app/globals.css';
+import ClientLayout from "./components/clientLayout";
+import "./globals.css";
 
 export const metadata = {
-  title: "Skill Swap",
-  description: "Skill Exchange platform",
+  title: "My App",
+  description: "Some description",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-       className="m-0"
-      >
-        <header>
-         <Navbar>
-         </Navbar>
-        </header>
-        {children}
+      <body>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

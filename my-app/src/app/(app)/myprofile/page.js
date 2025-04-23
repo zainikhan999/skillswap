@@ -1,35 +1,35 @@
 "use client";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { FaUserCircle } from "react-icons/fa"; // Importing Profile Icon from React Icons
+import { FaUserCircle } from "react-icons/fa"; // Default avatar icon
 
 export default function UserProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
-  
   useEffect(() => {
     const fetchProfile = async () => {
       let parsedUser = null;
-  
-      if (typeof window !== "undefined") { 
+
+      if (typeof window !== "undefined") {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           parsedUser = JSON.parse(storedUser);
         }
       }
-  
-      if (!parsedUser || !parsedUser.userName) { 
+
+      if (!parsedUser || !parsedUser.userName) {
         setLoading(false);
         return;
       }
-  
+
       try {
-        const response = await axios.get(`http://localhost:5000/get-latest-profile`, {
-          params: { username: parsedUser.userName } // Send username as a query param
-        });
-  
+        const response = await axios.get(
+          `http://localhost:5000/api/get-latest-profile`,
+          {
+            params: { username: parsedUser.userName },
+          }
+        );
         setProfile(response.data);
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -37,23 +37,34 @@ export default function UserProfile() {
         setLoading(false);
       }
     };
-  
+
     fetchProfile();
   }, []);
-  
 
-  if (loading) return <div className="text-center mt-10 text-lg">Loading...</div>;
+  if (loading)
+    return <div className="text-center mt-10 text-lg">Loading...</div>;
 
-  if (!profile) return <div className="text-center mt-10 text-lg">No profile found</div>;
+  if (!profile)
+    return <div className="text-center mt-10 text-lg">No profile found</div>;
 
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-6 md:p-10 text-gray-800">
-        {/* Profile Icon */}
+        {/* Profile Icon or Image */}
         <div className="flex flex-col items-center">
-          <FaUserCircle className="h-24 w-24 text-gray-400 mb-3" /> {/* React Icon */}
+          {profile.profileImage ? (
+            <img
+              src={profile.profileImage}
+              alt="User Avatar"
+              className="h-24 w-24 object-cover rounded-full mb-3 shadow"
+            />
+          ) : (
+            <FaUserCircle className="h-24 w-24 text-gray-400 mb-3" />
+          )}
           <h2 className="text-2xl font-semibold">{profile.name}</h2>
-          <p className="text-gray-600">{profile.city}, {profile.country}</p>
+          <p className="text-gray-600">
+            {profile.city}, {profile.country}
+          </p>
         </div>
 
         {/* Profile Details */}

@@ -1,31 +1,25 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import io from "socket.io-client";
 import { FaUserCircle } from "react-icons/fa"; // Importing Font Awesome icon
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
-
+import { useSocket } from "../contexts/SocketContext"; // Import the custom hook for socket
+import { FaBars } from "react-icons/fa"; // Importing Font Awesome icon for hamburger menu
 export default function MessagingApp() {
   // State Variables
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [sender, setSender] = useState("");
   const [room, setRoom] = useState("");
   const [userList, setUserList] = useState([]);
   const [chatUsers, setChatUsers] = useState([]);
+  const [swapAccepted, setSwapAccepted] = useState(false); // New state to track swap acceptance
 
   // Refs
-  const socketRef = useRef(null);
-  //for scrolling
-  const messagesEndRef = useRef(null);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
+  const { socket, socketRef } = useSocket(); // Use the socket context
+  const messagesEndRef = useRef(null); // For scrolling
 
   // Router and URL Search Params
   const router = useRouter();
@@ -84,7 +78,7 @@ export default function MessagingApp() {
         .get(`http://localhost:5000/chats/${sender}`)
         .then((res) => {
           console.log("Fetched chat users:", res.data);
-          setChatUsers(res.data); // Change if needed
+          setChatUsers(res.data);
         })
         .catch((err) => console.error(err));
     }
@@ -93,20 +87,20 @@ export default function MessagingApp() {
   // Set up socket connection and room joining
   useEffect(() => {
     if (!room) return;
-    const socket = io("http://localhost:5000");
-    socketRef.current = socket;
 
     socket.emit("join_room", room);
 
-    socket.on("receive_message", ({ message, sender }) => {
+    const handleMessage = ({ message, sender }) => {
       setMessages((prev) => [
         ...prev,
         { text: message, user: sender, time: new Date().toLocaleTimeString() },
       ]);
-    });
+    };
+
+    socket.on("receive_message", handleMessage);
 
     return () => {
-      socket.disconnect();
+      socket.off("receive_message", handleMessage);
     };
   }, [room]);
 
@@ -177,123 +171,103 @@ export default function MessagingApp() {
     }
   };
 
-  // Mark message as seen if received and update status
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.user !== sender && !lastMessage.seen) {
-        socketRef.current.emit("message_seen", {
-          timestamp: lastMessage.timestamp,
-          room,
-        });
+  // Handle swap button click
+  const handleSwapAcceptance = async () => {
+    router.push("/acceptswap");
+  };
 
-        lastMessage.seen = true;
-        sendSeenStatusToBackend(lastMessage.timestamp);
-      }
+  // Get recipient from search params or local storage
+  const recipient =
+    searchParams.get("recipient") || localStorage.getItem("chatWith");
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Emit seen status to backend
-  const sendSeenStatusToBackend = async (timestamp) => {
-    const recipient =
-      searchParams.get("recipient") || localStorage.getItem("chatWith");
-    if (!timestamp || !room || !sender || !recipient) {
-      console.warn("Missing data for seen update:", {
-        timestamp,
-        room,
-        sender,
-        recipient,
-      });
-      return;
-    }
-
-    try {
-      await axios.post("http://localhost:5000/message/seen", {
-        timestamp,
-        room,
-        sender,
-        recipient,
-      });
-
-      socketRef.current.emit("seen_status_updated", { timestamp });
-    } catch (error) {
-      console.error("Error updating message status:", error);
-    }
-  };
-
-  // Listen for received messages and update messages state
-  useEffect(() => {
-    if (!socketRef.current) return;
-
-    socketRef.current.on(
-      "receive_message",
-      ({ message, sender, timestamp }) => {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: message,
-            user: sender,
-            timestamp,
-            time: new Date(timestamp).toLocaleTimeString(),
-            seen: false,
-          },
-        ]);
-      }
-    );
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("receive_message");
-      }
-    };
-  }, []);
-
   return (
-    <div className="h-screen flex overflow-hidden relative">
+    <div className="h-screen flex overflow-hidden relative bg-white">
+      {/* Hamburger Menu */}
+      <div className="lg:hidden absolute top-4 left-4 z-40">
+        <button
+          className="text-3xl text-green-600 transition-transform hover:scale-110"
+          onClick={() => setSidebarOpen(!isSidebarOpen)}
+        >
+          <FaBars />
+        </button>
+      </div>
+
       {/* Sidebar */}
       {sender && chatUsers.length > 0 && (
-        <div className="absolute left-0 top-0 h-full w-64 bg-white shadow-md z-30 overflow-y-auto">
+        <div
+          className={`absolute top-0 left-0 h-full w-64 bg-white shadow-2xl z-30 overflow-y-auto transition-transform transform ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 lg:block`}
+        >
           {chatUsers.map((user) => (
-            <button
+            <div
               key={user}
-              className="w-full text-left p-2 hover:bg-blue-100"
+              className="w-full text-left px-4 py-3 hover:bg-green-100 cursor-pointer flex items-center gap-3 transition-all"
               onClick={() => {
-                localStorage.setItem("chatWith", user);
-                const newUrl = `?recipient=${user}`; // Fixed the template string
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("chatWith", user);
+                }
+                const newUrl = `?recipient=${user}`;
                 router.push(newUrl);
                 const newRoom = [sender, user].sort().join("_");
                 setRoom(newRoom);
-
-                setTimeout(() => {
-                  fetchChatHistory(sender, user);
-                }, 100);
+                setTimeout(() => fetchChatHistory(sender, user), 100);
               }}
             >
-              {user}
-            </button>
+              <FaUserCircle className="text-green-500 text-2xl" />
+              <div className="text-gray-800 font-medium">{user}</div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Main Chat UI */}
-      <div
-        className={`flex-1 p-4 ml-0 md:ml-64 w-full transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? "ml-64" : ""
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          <div
-            className="flex-1 bg-gradient-to-r from-blue-50 via-blue-100 to-blue-200 p-4 rounded-lg shadow-lg overflow-auto mb-4"
-            style={{ maxHeight: "calc(100vh - 200px)" }}
-          >
-            <div className="space-y-2">
+      {/* Chat Panel */}
+      <div className="flex-1 p-4 lg:ml-64 transition-all duration-300 ease-in-out mt-[-30px] h-[95%]">
+        <div className="flex flex-col h-full bg-white rounded-2xl shadow-md overflow-hidden">
+          {/* Header */}
+          <div className="flex justify-between items-center bg-green-500 px-6 py-4 rounded-t-2xl">
+            <div className="text-xl font-semibold text-white">{recipient}</div>
+            {!swapAccepted && (
+              <button
+                onClick={handleSwapAcceptance}
+                style={{
+                  backgroundColor: "white",
+                  color: "#047857", // Tailwind's green-700 hex
+                  padding: "0.5rem 1rem", // Equivalent to px-4 py-2
+                  borderRadius: "9999px", // Fully rounded (rounded-full)
+                  border: "1px solid #D1D5DB", // Tailwind's gray-300
+                  fontSize: "0.875rem", // text-sm
+                  fontWeight: 500,
+                  transition: "all 0.3s ease-in-out",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={
+                  (e) => (e.currentTarget.style.backgroundColor = "#F3F4F6") // Tailwind's gray-100
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "white")
+                }
+              >
+                Accept Swap
+              </button>
+            )}
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 p-4 bg-gradient-to-r from-green-50 via-green-100 to-green-200 rounded-b-xl shadow-inner overflow-y-auto">
+            <div className="space-y-3">
               {messages.map((msg, index) => {
                 const isSender = msg.user === sender;
                 const getDateString = (timestamp) => {
                   if (!timestamp) return "";
                   const date = new Date(
                     typeof timestamp === "number" && timestamp < 1e12
-                      ? timestamp * 1000 // If in seconds, convert to ms
+                      ? timestamp * 1000
                       : timestamp
                   );
                   return isNaN(date.getTime()) ? "" : date.toDateString();
@@ -304,15 +278,13 @@ export default function MessagingApp() {
                   index > 0
                     ? getDateString(messages[index - 1].timestamp)
                     : null;
-
                 const showDateSeparator =
                   index === 0 || currentDate !== previousDate;
 
                 return (
                   <div key={index}>
-                    {/* Date Separator */}
                     {showDateSeparator && currentDate && (
-                      <div className="text-center text-gray-500 text-sm my-4">
+                      <div className="text-center text-sm text-gray-500 my-3">
                         {new Date(msg.timestamp).toLocaleDateString("en-US", {
                           weekday: "long",
                           year: "numeric",
@@ -322,51 +294,46 @@ export default function MessagingApp() {
                       </div>
                     )}
 
-                    {/* Message Bubble */}
                     <div
-                      className={`flex items-start space-x-3 ${
+                      className={`flex items-start gap-2 ${
                         isSender ? "justify-end" : "justify-start"
                       }`}
                     >
-                      {/* Avatar for Sender/Receiver */}
                       {!isSender && (
-                        <FaUserCircle className="w-8 h-8 text-gray-600" />
+                        <FaUserCircle className="text-gray-600 text-2xl" />
                       )}
-
                       <div
-                        className={`p-3 rounded-xl shadow mb-2 max-w-[70%] ${
+                        className={`max-w-[80%] px-4 py-2 rounded-2xl shadow-sm break-words ${
                           isSender
-                            ? "bg-blue-500 text-white ml-auto"
-                            : "bg-gray-200 text-gray-900 mr-auto"
+                            ? "bg-green-600 text-white"
+                            : "bg-white text-gray-800"
                         }`}
                       >
-                        <p>{msg.text}</p>
-                        <span className="block text-xs text-right">
-                          {msg.time}
-                        </span>
+                        {msg.text}
                       </div>
+                      {isSender && (
+                        <FaUserCircle className="text-gray-600 text-2xl" />
+                      )}
                     </div>
                   </div>
                 );
               })}
+              <div ref={messagesEndRef} />
             </div>
-            {/* Scroll trigger */}
-            <div ref={messagesEndRef}></div>
           </div>
 
           {/* Message Input */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3 p-4 border-t bg-white">
             <textarea
-              className="w-full p-3 border rounded-lg resize-none"
-              rows={3}
+              className="flex-1 p-3 rounded-2xl bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none transition-all"
               placeholder="Type your message..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
             />
             <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               onClick={handleSendMessage}
+              className="bg-green-500 text-white px-5 py-2 rounded-full hover:bg-green-600 transition-all text-sm font-medium"
             >
               Send
             </button>
