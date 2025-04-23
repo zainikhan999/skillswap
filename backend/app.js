@@ -53,15 +53,20 @@ io.on("connection", (socket) => {
   });
   socket.on("message", async ({ room, message, sender, recipient }) => {
     const timestamp = new Date().toISOString();
-    io.to(room).emit("receive_message", { message, sender, timestamp });
-
-    // Add this log:
-    console.log("Incoming socket message:", {
-      room,
-      sender,
-      recipient,
-      message,
-    });
+    io
+      .to(room)
+      .emit("receive_message", {
+        message,
+        sender,
+        timestamp: new Date().getTime(),
+      }), // Sending Unix timestamp (milliseconds) });
+      // Add this log:
+      console.log("Incoming socket message:", {
+        room,
+        sender,
+        recipient,
+        message,
+      });
 
     try {
       const newNotification = new Notification({

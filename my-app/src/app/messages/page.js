@@ -90,10 +90,10 @@ export default function MessagingApp() {
 
     socket.emit("join_room", room);
 
-    const handleMessage = ({ message, sender }) => {
+    const handleMessage = ({ message, sender, timestamp }) => {
       setMessages((prev) => [
         ...prev,
-        { text: message, user: sender, time: new Date().toLocaleTimeString() },
+        { text: message, user: sender, time: timestamp, timestamp },
       ]);
     };
 
@@ -185,6 +185,28 @@ export default function MessagingApp() {
     }
   }, [messages]);
 
+  const isValidTimestamp = (timestamp) => {
+    const date = new Date(
+      typeof timestamp === "number" && timestamp < 1e12
+        ? timestamp * 1000
+        : timestamp
+    );
+    return !isNaN(date.getTime()) ? date : null;
+  };
+
+  function getFormattedDate(timestamp) {
+    if (!timestamp) return null;
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return null;
+
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
   return (
     <div className="h-screen flex overflow-hidden relative bg-white">
       {/* Hamburger Menu */}
@@ -246,8 +268,8 @@ export default function MessagingApp() {
                   transition: "all 0.3s ease-in-out",
                   cursor: "pointer",
                 }}
-                onMouseEnter={
-                  (e) => (e.currentTarget.style.backgroundColor = "#F3F4F6") // Tailwind's gray-100
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#F3F4F6")
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.backgroundColor = "white")
@@ -263,20 +285,10 @@ export default function MessagingApp() {
             <div className="space-y-3">
               {messages.map((msg, index) => {
                 const isSender = msg.user === sender;
-                const getDateString = (timestamp) => {
-                  if (!timestamp) return "";
-                  const date = new Date(
-                    typeof timestamp === "number" && timestamp < 1e12
-                      ? timestamp * 1000
-                      : timestamp
-                  );
-                  return isNaN(date.getTime()) ? "" : date.toDateString();
-                };
-
-                const currentDate = getDateString(msg.timestamp);
+                const currentDate = getFormattedDate(msg.timestamp);
                 const previousDate =
                   index > 0
-                    ? getDateString(messages[index - 1].timestamp)
+                    ? getFormattedDate(messages[index - 1].timestamp)
                     : null;
                 const showDateSeparator =
                   index === 0 || currentDate !== previousDate;
@@ -285,15 +297,9 @@ export default function MessagingApp() {
                   <div key={index}>
                     {showDateSeparator && currentDate && (
                       <div className="text-center text-sm text-gray-500 my-3">
-                        {new Date(msg.timestamp).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                        {currentDate}
                       </div>
                     )}
-
                     <div
                       className={`flex items-start gap-2 ${
                         isSender ? "justify-end" : "justify-start"
@@ -310,6 +316,16 @@ export default function MessagingApp() {
                         }`}
                       >
                         {msg.text}
+                        <div className="text-xs mt-1 text-right opacity-70">
+                          {msg.timestamp &&
+                            new Date(msg.timestamp).toLocaleTimeString(
+                              "en-US",
+                              {
+                                hour: "numeric",
+                                minute: "numeric",
+                              }
+                            )}
+                        </div>
                       </div>
                       {isSender && (
                         <FaUserCircle className="text-gray-600 text-2xl" />
@@ -318,6 +334,7 @@ export default function MessagingApp() {
                   </div>
                 );
               })}
+
               <div ref={messagesEndRef} />
             </div>
           </div>
