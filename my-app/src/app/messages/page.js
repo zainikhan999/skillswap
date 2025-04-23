@@ -1,11 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { FaUserCircle } from "react-icons/fa"; // Importing Font Awesome icon
+import { FaBars, FaUserCircle, FaArrowLeft, FaTimes } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useSocket } from "../contexts/SocketContext"; // Import the custom hook for socket
-import { FaBars } from "react-icons/fa"; // Importing Font Awesome icon for hamburger menu
 export default function MessagingApp() {
   // State Variables
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -209,16 +208,6 @@ export default function MessagingApp() {
 
   return (
     <div className="h-screen flex overflow-hidden relative bg-white">
-      {/* Hamburger Menu */}
-      <div className="lg:hidden absolute top-4 left-4 z-40">
-        <button
-          className="text-3xl text-green-600 transition-transform hover:scale-110"
-          onClick={() => setSidebarOpen(!isSidebarOpen)}
-        >
-          <FaBars />
-        </button>
-      </div>
-
       {/* Sidebar */}
       {sender && chatUsers.length > 0 && (
         <div
@@ -226,6 +215,29 @@ export default function MessagingApp() {
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0 lg:block`}
         >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
+            {/* Back arrow button (optional functionality, e.g. go to home or toggle) */}
+            <button
+              className="text-xl text-green-600 lg:hidden"
+              onClick={() => {
+                // Optional: Add back logic here
+                setSidebarOpen(false);
+              }}
+            >
+              <FaArrowLeft />
+            </button>
+
+            <span className="text-lg font-semibold text-gray-800">Chats</span>
+
+            {/* Close (X) button */}
+            <button
+              className="text-xl text-red-500 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaTimes />
+            </button>
+          </div>
+
           {chatUsers.map((user) => (
             <div
               key={user}
@@ -253,7 +265,19 @@ export default function MessagingApp() {
         <div className="flex flex-col h-full bg-white rounded-2xl shadow-md overflow-hidden">
           {/* Header */}
           <div className="flex justify-between items-center bg-green-500 px-6 py-4 rounded-t-2xl">
-            <div className="text-xl font-semibold text-white">{recipient}</div>
+            <div className="flex items-center gap-4">
+              {/* Hamburger Button (only visible on small screens) */}
+              <button
+                className="lg:hidden text-2xl text-white hover:scale-110 transition-transform"
+                onClick={() => setSidebarOpen(!isSidebarOpen)}
+              >
+                <FaBars />
+              </button>
+              {/* Recipient Name */}
+              <div className="text-xl font-semibold text-white">
+                {recipient}
+              </div>
+            </div>
             {!swapAccepted && (
               <button
                 onClick={handleSwapAcceptance}
