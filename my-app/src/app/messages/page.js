@@ -264,7 +264,7 @@ export default function MessagingApp() {
       <div className="flex-1 p-4 lg:ml-64 transition-all duration-300 ease-in-out mt-[-30px] h-[95%]">
         <div className="flex flex-col h-full bg-white rounded-2xl shadow-md overflow-hidden">
           {/* Header */}
-          <div className="flex justify-between items-center bg-green-500 px-6 py-4 rounded-t-2xl">
+          <div className="flex justify-between items-center bg-green-500 px-6 py-6 rounded-t-2xl ">
             <div className="flex items-center gap-4">
               {/* Hamburger Button (only visible on small screens) */}
               <button
