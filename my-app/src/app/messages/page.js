@@ -5,6 +5,7 @@ import { FaBars, FaUserCircle, FaArrowLeft, FaTimes } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useSocket } from "../contexts/SocketContext"; // Import the custom hook for socket
+import SwapFormModal from "../components/swapformModel"; // Import the modal componentwapFormModal"; // Import the modal component
 export default function MessagingApp() {
   // State Variables
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -15,6 +16,8 @@ export default function MessagingApp() {
   const [userList, setUserList] = useState([]);
   const [chatUsers, setChatUsers] = useState([]);
   const [swapAccepted, setSwapAccepted] = useState(false); // New state to track swap acceptance
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [recipient, setRecipient] = useState(null);
 
   // Refs
   const { socket, socketRef } = useSocket(); // Use the socket context
@@ -24,6 +27,20 @@ export default function MessagingApp() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const handleSwapAcceptance = () => {
+    setSwapAccepted(true);
+    setIsModalOpen(true); // Open the modal when swap is accepted
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false); // Close the modal when canceled or submitted
+  };
+
+  const handleSubmitSwap = (swapDetails) => {
+    console.log("Submitted swap details:", swapDetails);
+    // Handle submitted swap details here
+    setIsModalOpen(false); // Close the modal after submission
+  };
   // Fetch Chat History
   const fetchChatHistory = async (user1, user2) => {
     try {
@@ -171,18 +188,21 @@ export default function MessagingApp() {
   };
 
   // Handle swap button click
-  const handleSwapAcceptance = async () => {
-    router.push("/acceptswap");
-  };
 
   // Get recipient from search params or local storage
-  const recipient =
-    searchParams.get("recipient") || localStorage.getItem("chatWith");
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      const paramRecipient = searchParams.get("recipient");
+      const storedRecipient = localStorage.getItem("chatWith");
+
+      const finalRecipient = paramRecipient || storedRecipient;
+      setRecipient(finalRecipient);
+
+      if (paramRecipient) {
+        localStorage.setItem("chatWith", paramRecipient);
+      }
     }
-  }, [messages]);
+  }, [searchParams]);
 
   const isValidTimestamp = (timestamp) => {
     const date = new Date(
@@ -218,7 +238,7 @@ export default function MessagingApp() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
             {/* Back arrow button (optional functionality, e.g. go to home or toggle) */}
             <button
-              className="text-xl text-green-600 lg:hidden"
+              className="text-xl text-green-600 lg:hidden "
               onClick={() => {
                 // Optional: Add back logic here
                 setSidebarOpen(false);
@@ -381,6 +401,12 @@ export default function MessagingApp() {
           </div>
         </div>
       </div>
+      <SwapFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        recipient={recipient}
+        onSubmit={handleSubmitSwap}
+      />
     </div>
   );
 }

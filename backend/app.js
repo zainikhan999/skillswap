@@ -53,13 +53,11 @@ io.on("connection", (socket) => {
   });
   socket.on("message", async ({ room, message, sender, recipient }) => {
     const timestamp = new Date().toISOString();
-    io
-      .to(room)
-      .emit("receive_message", {
-        message,
-        sender,
-        timestamp: new Date().getTime(),
-      }), // Sending Unix timestamp (milliseconds) });
+    io.to(room).emit("receive_message", {
+      message,
+      sender,
+      timestamp: new Date().getTime(),
+    }), // Sending Unix timestamp (milliseconds) });
       // Add this log:
       console.log("Incoming socket message:", {
         room,
@@ -154,8 +152,8 @@ app.get("/chats/:username", async (req, res) => {
     const chatUsers = new Set();
 
     messages.forEach((msg) => {
-      if (msg.sender !== username) chatUsers.add(msg.sender);
-      if (msg.receiver !== username) chatUsers.add(msg.receiver);
+      const otherUser = msg.sender === username ? msg.receiver : msg.sender;
+      chatUsers.add(otherUser);
     });
 
     res.json([...chatUsers]);
@@ -164,6 +162,7 @@ app.get("/chats/:username", async (req, res) => {
     res.status(500).json({ error: "Could not fetch chat users" });
   }
 });
+
 app.get("/messages/:user1/:user2", async (req, res) => {
   const { user1, user2 } = req.params;
 
