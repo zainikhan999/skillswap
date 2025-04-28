@@ -3,8 +3,10 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
+import { useAuth } from "../../contexts/AuthContext";
 export default function SignUp() {
   const router = useRouter();
+  const { isAuthenticated, logout } = useAuth();
 
   const [userName, setUserName] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -15,13 +17,14 @@ export default function SignUp() {
   const [userNameError, setUserNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+  const { login } = useAuth();
 
   // Redirect user if already logged in
   useEffect(() => {
-    // Store only the username in localStorage
-    const userData = { userName };
-    localStorage.setItem("user", JSON.stringify(userData));
-  }, []);
+    if (isAuthenticated) {
+      router.push("/profile"); // Redirect logged-in users to profile page
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -40,20 +43,18 @@ export default function SignUp() {
         console.log("User registered successfully:", response.data);
         const userData = { userName, firstName, lastName, email };
         localStorage.setItem("user", JSON.stringify(userData));
+        login(userData.userName);
         setShowPopup(true);
 
         // Redirect to login page after 3 seconds
         setTimeout(() => {
           setShowPopup(false);
-          router.push("/main");
+          router.push("/profile"); // Redirect to login page after successful signup
         }, 3000);
       }
     } catch (error) {
       console.log("Error response:", error.response?.data);
-
       const data = error.response?.data;
-
-      // Check if it's a message object
       if (data && typeof data === "object" && "message" in data) {
         setErrorMessage(data.message);
       } else {
@@ -62,13 +63,10 @@ export default function SignUp() {
     }
   };
 
-  // Error message state for multiple fields
   const [errorMessages, setErrorMessages] = useState({});
 
   return (
     <>
-      <h1 className="text-center text-4xl text-blue-500 mt-12">Sign Up</h1>
-
       <div className="flex items-center justify-center h-screen">
         <div className="max-w-md w-full p-8 border border-gray-300 rounded-lg shadow-lg bg-white">
           <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
@@ -151,7 +149,13 @@ export default function SignUp() {
               </p>
             )}
 
-            <button type="submit">Sign Up</button>
+            <button
+              type="submit"
+              className="w-full p-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Sign Up
+            </button>
+
             <p className="text-center">
               Already have an account?{" "}
               <Link href="/login">

@@ -18,7 +18,8 @@ export default function SwapFormModal({
   const [deadline, setDeadline] = useState("");
   const [currentUserFromStorage, setCurrentUserFromStorage] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // 👈 Error state
+  const [errorMessage, setErrorMessage] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -103,11 +104,15 @@ export default function SwapFormModal({
             </button>
             <button
               type="button"
-              onClick={() => navigator.clipboard.writeText(taskId)}
+              onClick={() => {
+                navigator.clipboard.writeText(taskId);
+                setCopyStatus("Copied!");
+                setTimeout(() => setCopyStatus(""), 1500);
+              }}
               className="px-2 py-1 text-sm bg-gray-300 rounded whitespace-nowrap"
               disabled={!taskId}
             >
-              Copy
+              {copyStatus || "Copy"}
             </button>
           </div>
 

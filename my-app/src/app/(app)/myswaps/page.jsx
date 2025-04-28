@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { IoAddCircleSharp } from "react-icons/io5";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState([]);
@@ -36,7 +37,7 @@ export default function TaskList() {
         );
 
         if (response.data.success) {
-          console.log("Fetched tasks:", response.data.tasks); // Add this line to log the data
+          console.log("Fetched tasks:", response.data.tasks);
           setTasks(response.data.tasks);
         } else {
           setErrorMessage("Failed to fetch tasks");
@@ -62,7 +63,6 @@ export default function TaskList() {
       if (response.data.success) {
         alert("Task confirmed!");
 
-        // Re-fetch tasks to get the latest status from both users
         const refreshResponse = await axios.get(
           "http://localhost:5000/get-swap-tasks",
           {
@@ -105,117 +105,132 @@ export default function TaskList() {
   if (loading) return <p>Loading tasks...</p>;
 
   return (
-    <div className="p-6 overflow-x-auto">
-      <h2 className="text-2xl font-semibold mb-4">Your Task Swaps</h2>
-      {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
+    <>
+      <div className="p-6 overflow-x-auto">
+        <h2 className="text-2xl font-semibold mb-4">Your Task Swaps</h2>
+        {errorMessage && (
+          <div className="text-red-500 mb-4">{errorMessage}</div>
+        )}
 
-      {tasks.length === 0 ? (
-        <p className="text-center text-gray-500">No tasks available.</p>
-      ) : (
-        <div className="space-y-4">
-          {(() => {
-            const taskMap = {};
-            tasks.forEach((task) => {
-              if (!taskMap[task.taskId]) {
-                taskMap[task.taskId] = {};
-              }
+        {tasks.length === 0 ? (
+          <p className="text-center text-gray-500">No tasks available.</p>
+        ) : (
+          <div className="space-y-4">
+            {(() => {
+              const taskMap = {};
+              tasks.forEach((task) => {
+                if (!taskMap[task.taskId]) {
+                  taskMap[task.taskId] = {};
+                }
 
-              if (task.currentUser === currentUserFromStorage) {
-                taskMap[task.taskId].myTask = task;
-              } else {
-                taskMap[task.taskId].theirTask = task;
-              }
+                if (task.currentUser === currentUserFromStorage) {
+                  taskMap[task.taskId].myTask = task;
+                } else {
+                  taskMap[task.taskId].theirTask = task;
+                }
 
-              taskMap[task.taskId].status = task.status;
-            });
+                taskMap[task.taskId].status = task.status;
+              });
 
-            return Object.entries(taskMap).map(([taskId, pair]) => (
-              <div
-                key={taskId}
-                className="flex flex-col sm:grid sm:grid-cols-5 md:grid-cols-6 gap-4 bg-white shadow rounded-xl p-4 border border-gray-200 text-sm"
-              >
-                <div className="text-gray-400">#{taskId}</div>
-
-                <div>
-                  <p className="font-semibold text-blue-600">
-                    {pair.myTask ? pair.myTask.taskName : "N/A"}
-                  </p>
-                  <p className="text-xs text-gray-500">You will do</p>
-                  <p className="text-xs text-gray-600">
-                    Time:{" "}
-                    {pair.myTask ? `${pair.myTask.timeRequired} hrs` : "N/A"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="font-semibold text-green-600">
-                    {pair.theirTask ? pair.theirTask.taskName : "N/A"}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {pair.theirTask
-                      ? `${pair.theirTask.currentUser} will do`
-                      : "They will do"}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Time:{" "}
-                    {pair.theirTask
-                      ? `${pair.theirTask.timeRequired} hrs`
-                      : "N/A"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="font-medium">
-                    {pair.myTask
-                      ? new Date(pair.myTask.deadline).toLocaleDateString()
-                      : "N/A"}
-                  </p>
-                  <p className="text-xs text-gray-500">Deadline</p>
-                </div>
-
+              return Object.entries(taskMap).map(([taskId, pair]) => (
                 <div
-                  className={`${
-                    pair.myTask?.isConfirmed && pair.theirTask?.isConfirmed
-                      ? "text-green-600"
-                      : "text-yellow-600"
-                  } font-medium`}
+                  key={taskId}
+                  className="flex flex-col sm:grid sm:grid-cols-5 md:grid-cols-6 gap-4 bg-white shadow rounded-xl p-4 border border-gray-200 text-sm"
                 >
-                  {pair.myTask?.isConfirmed && pair.theirTask?.isConfirmed
-                    ? "Confirmed by both"
-                    : pair.myTask?.isConfirmed
-                    ? "You confirmed"
-                    : pair.theirTask?.isConfirmed
-                    ? `${pair.theirTask.currentUser} confirmed`
-                    : "Pending"}
-                </div>
+                  <div className="text-gray-400">#{taskId}</div>
 
-                <div className="flex gap-2 sm:justify-end">
-                  {!(
-                    pair.myTask?.isConfirmed && pair.theirTask?.isConfirmed
-                  ) && (
-                    <>
-                      {!pair.myTask?.isConfirmed && (
+                  <div>
+                    <p className="font-semibold text-blue-600">
+                      {pair.myTask ? pair.myTask.taskName : "N/A"}
+                    </p>
+                    <p className="text-xs text-gray-500">You will do</p>
+                    <p className="text-xs text-gray-600">
+                      Time:{" "}
+                      {pair.myTask ? `${pair.myTask.timeRequired} hrs` : "N/A"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-green-600">
+                      {pair.theirTask ? pair.theirTask.taskName : "N/A"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {pair.theirTask
+                        ? `${pair.theirTask.currentUser} will do`
+                        : "They will do"}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Time:{" "}
+                      {pair.theirTask
+                        ? `${pair.theirTask.timeRequired} hrs`
+                        : "N/A"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-medium">
+                      {pair.myTask
+                        ? new Date(pair.myTask.deadline).toLocaleDateString()
+                        : "N/A"}
+                    </p>
+                    <p className="text-xs text-gray-500">Deadline</p>
+                  </div>
+
+                  <div
+                    className={`${
+                      pair.myTask?.isConfirmed && pair.theirTask?.isConfirmed
+                        ? "text-green-600"
+                        : "text-yellow-600"
+                    } font-medium`}
+                  >
+                    {pair.myTask?.isConfirmed && pair.theirTask?.isConfirmed
+                      ? "Confirmed by both"
+                      : pair.myTask?.isConfirmed
+                      ? "You confirmed"
+                      : pair.theirTask?.isConfirmed
+                      ? `${pair.theirTask.currentUser} confirmed`
+                      : "Pending"}
+                  </div>
+
+                  <div className="flex gap-2 sm:justify-end">
+                    {!(
+                      pair.myTask?.isConfirmed && pair.theirTask?.isConfirmed
+                    ) && (
+                      <>
+                        {!pair.myTask?.isConfirmed && (
+                          <button
+                            onClick={() => handleConfirm(taskId)}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Confirm
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleConfirm(taskId)}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                          onClick={() => handleDelete(taskId)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
                         >
-                          Confirm
+                          Cancel
                         </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(taskId)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ));
-          })()}
-        </div>
-      )}
-    </div>
+              ));
+            })()}
+          </div>
+        )}
+      </div>
+
+      {/* Floating Add Task Button */}
+      <div className="fixed bottom-12 left-1/2 transform -translate-x-1/2 z-50">
+        <button
+          onClick={() => (window.location.href = "/allservices")}
+          className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-xl flex items-center justify-center text-4xl"
+          title="Add New Task"
+        >
+          <IoAddCircleSharp />
+        </button>
+      </div>
+    </>
   );
 }

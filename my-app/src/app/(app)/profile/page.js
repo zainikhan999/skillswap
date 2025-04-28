@@ -2,20 +2,23 @@
 import { FaUserCircle } from "react-icons/fa"; // Import the icon
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dnmhfubvn/image/upload";
 const UPLOAD_PRESET = "displaypicture";
 
 export default function ProfileForm() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     name: "",
     username: "",
     city: "",
-    country: "Pakistan", // Add this
+    country: "Pakistan",
     contactNumber: "",
     bio: "",
     skills: [""],
-    profileImage: "", // Add profile picture URL to formData
+    profileImage: "",
   });
 
   const [image, setImage] = useState(null);
@@ -106,6 +109,7 @@ export default function ProfileForm() {
         updatedData
       );
       alert(response.data.message);
+      router.push("/allservices");
     } catch (error) {
       alert(error.response?.data?.message || "Error submitting profile");
     }

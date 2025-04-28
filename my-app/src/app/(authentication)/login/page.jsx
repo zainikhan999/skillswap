@@ -2,12 +2,14 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation"; // Import useRouter
-
+import { useAuth } from "../../contexts/AuthContext"; // Adjust path if needed
+import Link from "next/link";
 export default function Login() {
   const [userName, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter(); // Initialize useRouter
+  const { login } = useAuth();
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -22,34 +24,28 @@ export default function Login() {
       const { message, userType } = response.data;
       console.log("Login Response:", response.data);
 
-      // Store only the username in localStorage
       const userData = { userName };
-      localStorage.setItem("user", JSON.stringify(userData));
+      login(userData); // Pass userData to context
 
-      // // Store only the username in localStorage
-      // localStorage.setItem("user", JSON.stringify({ userName: username }));
-
-      // Navigate based on userType
       if (userType === "user") {
-        router.push("/main"); // Redirect only if login is successful
+        router.push("/allservices");
       }
     } catch (error) {
       console.log("Error response:", error.response?.data);
 
       const data = error.response?.data;
 
-      // Check if it's a message object
       if (data && typeof data === "object" && "message" in data) {
         setErrorMessage(data.message);
       } else {
-        setErrorMessage("Login Failed.Please try again.");
+        setErrorMessage("Login Failed. Please try again.");
       }
     }
   };
 
   return (
     <div className="flex items-center justify-center h-screen bg-background">
-      <div className="max-w-md w-full p-8 border border-iconsAndBorders rounded-lg shadow-lg bg-white">
+      <div className="max-w-md w-full p-8  border border-gray-300 border-iconsAndBorders rounded-lg shadow-lg bg-white">
         <h1 className="text-3xl font-bold text-headings text-center mb-8">
           Welcome Back!
         </h1>
@@ -84,6 +80,15 @@ export default function Login() {
             Log In
           </button>
         </form>
+        {/* Sign Up Link */}
+        <div className="mt-4 text-center">
+          <p className="text-center">
+            Don't have an account?{" "}
+            <Link href="/signup">
+              <span className="text-blue-500 cursor-pointer">Signup</span>
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
