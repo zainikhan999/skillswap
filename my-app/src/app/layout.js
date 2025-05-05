@@ -1,6 +1,7 @@
 import ClientLayout from "./components/clientLayout";
 import "./globals.css";
 import { AuthProvider } from "contexts/AuthContext";
+import { ChatProvider } from "contexts/ChatContext";
 export const metadata = {
   title: "My App",
   description: "Some description",
@@ -11,7 +12,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <AuthProvider>
-          <ClientLayout>{children}</ClientLayout>
+          <ChatProvider>
+            <ClientLayout>{children}</ClientLayout>
+          </ChatProvider>
         </AuthProvider>
       </body>
     </html>

@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-
 const AllGigs = () => {
   const [gigs, setGigs] = useState([]);
   const [profiles, setProfiles] = useState({});
@@ -21,7 +20,7 @@ const AllGigs = () => {
         // Derive categories from skillName
         const uniqueSkillNames = [
           "All",
-          ...new Set(gigList.map((gig) => gig.skillName)),
+          ...new Set(gigList.map((gig) => gig.category)),
         ];
         setCategories(uniqueSkillNames);
 
@@ -55,7 +54,7 @@ const AllGigs = () => {
     if (category === "All") {
       setFilteredGigs(gigs); // Show all gigs if 'All' is selected
     } else {
-      const filteredGigsList = gigs.filter((gig) => gig.skillName === category);
+      const filteredGigsList = gigs.filter((gig) => gig.category === category);
       setFilteredGigs(filteredGigsList); // Show gigs of the selected category
     }
   };
@@ -142,222 +141,3 @@ const AllGigs = () => {
 };
 
 export default AllGigs;
-// "use client";
-// import { useEffect, useState } from "react";
-// import axios from "axios";
-// import { useRouter } from "next/navigation";
-// import { GoogleGenAI } from "@google/genai";
-// import dotenv from "dotenv";
-
-// dotenv.config(); // Load environment variables from .env file
-// const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Ensure you have this in your .env file
-
-// async function fetchEmbeddings() {
-//   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-//   const response = await ai.models.embedContent({
-//     model: "gemini-embedding-exp-03-07",
-//     contents: "What is the meaning of life?",
-//     config: {
-//       taskType: "SEMANTIC_SIMILARITY",
-//     },
-//   });
-
-//   return response.embeddings;
-// }
-
-// // main();
-// // // Helper function to fetch embeddings for a gig's skill description
-// // const fetchEmbeddings = async (text) => {
-// //   const response = await axios.post("/api/embeddings", { text });
-// //   return response.data.embedding; // Return the embedding vector
-// // };
-
-// // Cosine similarity function to compare embeddings
-// const cosineSimilarity = (vecA, vecB) => {
-//   const dotProduct = vecA.reduce((sum, val, i) => sum + val * vecB[i], 0);
-//   const magnitudeA = Math.sqrt(vecA.reduce((sum, val) => sum + val * val, 0));
-//   const magnitudeB = Math.sqrt(vecB.reduce((sum, val) => sum + val * val, 0));
-//   return dotProduct / (magnitudeA * magnitudeB); // Cosine similarity formula
-// };
-
-// const AllGigs = () => {
-//   const [gigs, setGigs] = useState([]);
-//   const [profiles, setProfiles] = useState({});
-//   const [categories, setCategories] = useState(["All", "Uncategorized"]); // Default category "Uncategorized"
-//   const [selectedCategory, setSelectedCategory] = useState("All");
-//   const [filteredGigs, setFilteredGigs] = useState([]);
-//   const [embeddings, setEmbeddings] = useState([]);
-//   const router = useRouter();
-
-//   useEffect(() => {
-//     const fetchGigsAndProfiles = async () => {
-//       try {
-//         const { data: gigList } = await axios.get(
-//           "http://localhost:5000/api/get-all-gigs"
-//         );
-
-//         // Generate embeddings for each gig description
-//         const gigEmbeddings = await Promise.all(
-//           gigList.map(
-//             async (gig) => await fetchEmbeddings(gig.skillDescription)
-//           )
-//         );
-//         setEmbeddings(gigEmbeddings);
-
-//         // Derive categories from skillName if there are gigs
-//         const uniqueSkillNames = [
-//           "All",
-//           ...new Set(gigList.map((gig) => gig.skillName)),
-//         ];
-//         setCategories(uniqueSkillNames);
-
-//         // For each gig, get the profile
-//         const profilesData = {};
-//         await Promise.all(
-//           gigList.map(async (gig) => {
-//             if (!profilesData[gig.username]) {
-//               const res = await axios.get(
-//                 `http://localhost:5000/api/get-latest-profile?username=${gig.username}`
-//               );
-//               profilesData[gig.username] = res.data;
-//             }
-//           })
-//         );
-
-//         setProfiles(profilesData);
-//         setGigs(gigList);
-//         setFilteredGigs(gigList); // Initially show all gigs
-//       } catch (err) {
-//         console.error(err);
-//       }
-//     };
-
-//     fetchGigsAndProfiles();
-//   }, []);
-
-//   // Function to categorize gigs based on similarity
-//   const categorizeGigs = () => {
-//     const categoriesList = [];
-//     gigs.forEach((gig, index) => {
-//       const gigEmbedding = embeddings[index];
-//       let assigned = false;
-
-//       // Try to find an existing category
-//       for (let category of categoriesList) {
-//         const categoryEmbedding = category[0].embedding;
-//         const similarity = cosineSimilarity(gigEmbedding, categoryEmbedding);
-
-//         // If similarity is high, add the gig to this category
-//         if (similarity > 0.8) {
-//           // You can adjust this threshold
-//           category.push(gig);
-//           assigned = true;
-//           break;
-//         }
-//       }
-
-//       // If no similar category is found, create a new one
-//       if (!assigned) {
-//         categoriesList.push([{ gig, embedding: gigEmbedding }]);
-//       }
-//     });
-
-//     return categoriesList;
-//   };
-
-//   const categorizedGigs = categorizeGigs();
-
-//   // Handle category change
-//   const handleCategoryChange = (category) => {
-//     setSelectedCategory(category);
-//     if (category === "All") {
-//       setFilteredGigs(gigs); // Show all gigs if 'All' is selected
-//     } else {
-//       const filteredGigsList = gigs.filter((gig) => gig.skillName === category);
-//       setFilteredGigs(filteredGigsList); // Show gigs of the selected category
-//     }
-//   };
-
-//   // Handle redirect to messages
-//   const handleSwapRequest = (recipientUsername) => {
-//     router.push(`/messages?recipient=${recipientUsername}`);
-//   };
-
-//   return (
-//     <div className="container mx-auto px-4 py-6">
-//       <h2 className="text-3xl font-semibold mb-6">All Gigs</h2>
-
-//       {/* Category Navigation Bar */}
-//       <div className="mb-6">
-//         <div className="flex overflow-x-auto gap-4">
-//           {categories.map((category) => (
-//             <button
-//               key={category}
-//               onClick={() => handleCategoryChange(category)}
-//               className={`px-4 py-2 rounded-full border ${
-//                 selectedCategory === category
-//                   ? "bg-green-600 text-white"
-//                   : "bg-white text-gray-700 border-gray-300"
-//               } transition`}
-//             >
-//               {category}
-//             </button>
-//           ))}
-//         </div>
-//       </div>
-
-//       {/* Display the filtered gigs */}
-//       {filteredGigs.length > 0 ? (
-//         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-//           {filteredGigs.map((gig) => {
-//             const profile = profiles[gig.username];
-//             return (
-//               <div
-//                 key={gig._id}
-//                 className="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition-transform transform hover:scale-105"
-//               >
-//                 {/* Display User Profile First */}
-//                 <div className="flex items-center gap-4 mb-4">
-//                   <img
-//                     src={profile?.profileImage}
-//                     alt="Profile"
-//                     className="w-16 h-16 rounded-full object-cover"
-//                   />
-//                   <p className="text-sm text-gray-600">
-//                     {profile?.name} (@{gig.username})
-//                   </p>
-//                 </div>
-
-//                 <h3 className="text-xl font-bold text-green-600 mb-4">
-//                   {gig.skillName}
-//                 </h3>
-//                 <p className="text-gray-700 mb-4">{gig.skillDescription}</p>
-//                 <p className="text-sm text-gray-500 mb-2">
-//                   <strong>Exchange For:</strong> {gig.exchangeService}
-//                 </p>
-//                 <p className="text-sm text-gray-500">
-//                   <strong>Swaps:</strong> {gig.swapscount}
-//                 </p>
-
-//                 {/* Request Swap Button */}
-//                 <button
-//                   onClick={() => handleSwapRequest(gig.username)}
-//                   className="mt-4 px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition"
-//                 >
-//                   Request Swap
-//                 </button>
-//               </div>
-//             );
-//           })}
-//         </div>
-//       ) : (
-//         <p className="text-center text-gray-500 mt-6">
-//           No gigs found for this category.
-//         </p>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default AllGigs;

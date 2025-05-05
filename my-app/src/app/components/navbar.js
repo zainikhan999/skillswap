@@ -4,6 +4,7 @@ import { FiBell, FiMail, FiUser } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../contexts/AuthContext";
+import { useChat } from "../contexts/ChatContext"; // Import useChat to check if chat is open
 import axios from "axios";
 export default function Navbar() {
   const { socket, notification, setNotification } = useSocket(); // Access notification from context
@@ -13,6 +14,8 @@ export default function Navbar() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { isChatOpen } = useChat(); // Consume ChatContext to check if chat is open
+
   useEffect(() => {
     if (user && user.userName) {
       // Check if user and userName are available
@@ -123,7 +126,7 @@ export default function Navbar() {
             className="text-gray-700 text-xl cursor-pointer"
             onClick={toggleNotificationDropdown}
           />
-          {notificationCount > 0 && (
+          {notificationCount > 0 && !isChatOpen && (
             <span className="notification__badge absolute -top-1 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">
               {notificationCount}
             </span>
@@ -178,9 +181,15 @@ export default function Navbar() {
                 </div>
                 <div
                   className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer"
+                  onClick={() => router.push("/myuploadedservices")}
+                >
+                  My Services
+                </div>
+                <div
+                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer"
                   onClick={() => router.push("/services")}
                 >
-                  Offer Service
+                  Upload Service
                 </div>
                 <div
                   className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer"
@@ -188,6 +197,7 @@ export default function Navbar() {
                 >
                   My Swaps
                 </div>
+
                 <div
                   className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer"
                   onClick={handleLogout}

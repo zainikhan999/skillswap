@@ -224,7 +224,7 @@ export default function TaskList() {
       {/* Floating Add Task Button */}
       <div className="fixed bottom-12 left-1/2 transform -translate-x-1/2 z-50">
         <button
-          onClick={() => (window.location.href = "/allservices")}
+          onClick={() => (window.location.href = "/services")}
           className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-xl flex items-center justify-center text-4xl"
           title="Add New Task"
         >

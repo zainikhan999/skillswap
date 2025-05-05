@@ -26,6 +26,11 @@ const ServicesSchema = new mongoose.Schema({
     type: String, // Store the username here
     required: true,
   },
+
+  category: {
+    type: String,
+    required: true,
+  },
 });
 
 const Services = mongoose.model("Services", ServicesSchema);

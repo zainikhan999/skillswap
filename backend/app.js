@@ -11,6 +11,8 @@ import Message from "./Model/Message.js";
 import ChatRoom from "./Model/ChatRoom.js";
 import Notification from "./Model/Notification.js";
 import SwapDetails from "./Model/SwapDetails.js";
+import classifyRoute from "./routes/classifyRoute.js";
+
 dotenv.config();
 const envMode = process.env.NODE_ENV || "DEVELOPMENT";
 const MONGO_URI = process.env.MONGO_URI;
@@ -25,7 +27,7 @@ app.use(cors(corsOptions)); //
 
 app.use(express.json());
 app.use("/api", authRoutes);
-
+app.use("/api", classifyRoute);
 // ________________________________________________Socketio Connection_____________________________________________
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);

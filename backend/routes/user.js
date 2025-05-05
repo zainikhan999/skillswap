@@ -9,6 +9,8 @@ import { viewProfile } from "../controllers/profile.js";
 import { uploadService } from "../controllers/uploadservice.js";
 import { servicesValidator } from "../libs/servicesValidator.js";
 import { getServices } from "../controllers/uploadservice.js";
+import { myServices } from "../controllers/uploadservice.js";
+import { deleteService } from "../controllers/deleteService.js"; // Import the deleteService controller
 const app = express.Router();
 
 app.post("/signup", signupValidator, validationHandler, signup);
@@ -24,5 +26,7 @@ app.post(
   uploadService
 );
 app.get("/get-all-gigs", getServices);
+app.get("/get-my-gigs/:username", myServices); // Fetch gigs for a specific user
+app.delete("/delete-gig/:gigId", deleteService); // Fetch gigs for a specific user
 
 export default app;

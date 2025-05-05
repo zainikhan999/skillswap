@@ -5,6 +5,7 @@ import { FaBars, FaUserCircle, FaArrowLeft, FaTimes } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useSocket } from "../contexts/SocketContext"; // Import the custom hook for socket
+import { useChat } from "../contexts/ChatContext"; // Import the custom hook for chat context
 import SwapFormModal from "../components/swapformModel"; // Import the modal componentwapFormModal"; // Import the modal component
 export default function MessagingApp() {
   // State Variables
@@ -26,6 +27,34 @@ export default function MessagingApp() {
   // Router and URL Search Params
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Use chat context
+  const { isChatOpen, toggleChat } = useChat();
+  useEffect(() => {
+    console.log("Chat open state has been updated:", isChatOpen);
+  }, [isChatOpen]); // This will trigger every time `isChatOpen` changes
+
+  const handleRecipientClick = (user) => {
+    console.log("Chat with user:", user);
+
+    // Store recipient in localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chatWith", user);
+    }
+
+    // Update the URL with the recipient's name
+    const newUrl = `?recipient=${user}`;
+    router.push(newUrl);
+
+    // Set chat room based on sender and recipient
+    const newRoom = [sender, user].sort().join("_");
+    setRoom(newRoom);
+
+    // Toggle chat open/close based on recipient
+    toggleChat(user);
+
+    // Fetch chat history after a brief delay
+    setTimeout(() => fetchChatHistory(sender, user), 100);
+  };
 
   const handleSwapAcceptance = () => {
     setSwapAccepted(true);
@@ -262,16 +291,7 @@ export default function MessagingApp() {
             <div
               key={user}
               className="w-full text-left px-4 py-3 hover:bg-green-100 cursor-pointer flex items-center gap-3 transition-all"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  localStorage.setItem("chatWith", user);
-                }
-                const newUrl = `?recipient=${user}`;
-                router.push(newUrl);
-                const newRoom = [sender, user].sort().join("_");
-                setRoom(newRoom);
-                setTimeout(() => fetchChatHistory(sender, user), 100);
-              }}
+              onClick={() => handleRecipientClick(user)} // Using the handleRecipientClick function
             >
               <FaUserCircle className="text-green-500 text-2xl" />
               <div className="text-gray-800 font-medium">{user}</div>

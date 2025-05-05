@@ -1,5 +1,3 @@
-import Progresstracker from "../../components/Progresstracker";
-
 export default function Layout({ children }) {
   return (
     <div>
