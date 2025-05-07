@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useAuth } from "../contexts/AuthContext";
 import { useChat } from "../contexts/ChatContext"; // Import useChat to check if chat is open
 import axios from "axios";
+import Image from "next/image";
+
 export default function Navbar() {
   const { socket, notification, setNotification } = useSocket(); // Access notification from context
   const [notificationCount, setNotificationCount] = useState(0);
@@ -117,7 +119,7 @@ export default function Navbar() {
 
   return (
     <nav className="navbar fixed top-0 left-0 w-full flex items-center justify-between px-6 py-3 bg-white text-gray-800 shadow-md z-50">
-      <div className="navbar__logo text-lg font-semibold">Skill Swap</div>
+      <div className="text-lg font-semibold">Skill Swap</div>
 
       <div className="flex items-center space-x-6">
         {/* Notifications */}
@@ -189,7 +191,13 @@ export default function Navbar() {
                   className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer"
                   onClick={() => router.push("/services")}
                 >
-                  Upload Service
+                  Offer Service
+                </div>
+                <div
+                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer"
+                  onClick={() => router.push("/allservices")}
+                >
+                  All Services
                 </div>
                 <div
                   className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer"
