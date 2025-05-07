@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import SuccessPopup from "../../components/successPopup"; // Adjust path if needed
-
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../contexts/AuthContext"; // Adjust path if needed
 export default function GigUpload() {
+  const router = useRouter();
   const [localStr, setLocalStr] = useState(null);
   const [formData, setFormData] = useState({
     skillName: "",
@@ -13,6 +15,12 @@ export default function GigUpload() {
     category: "",
   });
   const [showSuccess, setShowSuccess] = useState(false);
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

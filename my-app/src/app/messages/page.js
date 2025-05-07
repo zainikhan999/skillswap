@@ -7,8 +7,10 @@ import axios from "axios";
 import { useSocket } from "../contexts/SocketContext"; // Import the custom hook for socket
 import { useChat } from "../contexts/ChatContext"; // Import the custom hook for chat context
 import SwapFormModal from "../components/swapformModel"; // Import the modal componentwapFormModal"; // Import the modal component
+import { useAuth } from "../contexts/AuthContext"; // Import the custom hook for authentication
 export default function MessagingApp() {
   // State Variables
+  const router = useRouter();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -22,10 +24,16 @@ export default function MessagingApp() {
 
   // Refs
   const { socket, socketRef } = useSocket(); // Use the socket context
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
   const messagesEndRef = useRef(null); // For scrolling
 
   // Router and URL Search Params
-  const router = useRouter();
+  // const router = useRouter();
   const searchParams = useSearchParams();
   // Use chat context
   const { isChatOpen, toggleChat } = useChat();

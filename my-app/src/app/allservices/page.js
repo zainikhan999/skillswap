@@ -2,14 +2,20 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext"; // Import the AuthContext
 const AllGigs = () => {
+  const router = useRouter();
   const [gigs, setGigs] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [filteredGigs, setFilteredGigs] = useState([]);
-  const router = useRouter();
-
+  const { user } = useAuth(); // Access the user from AuthContext
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
   useEffect(() => {
     const fetchGigsAndProfiles = async () => {
       try {

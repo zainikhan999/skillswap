@@ -3,6 +3,7 @@ import { FaUserCircle } from "react-icons/fa"; // Import the icon
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useAuth } from "contexts/AuthContext";
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dnmhfubvn/image/upload";
 const UPLOAD_PRESET = "displaypicture";
@@ -23,6 +24,12 @@ export default function ProfileForm() {
 
   const [image, setImage] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

@@ -16,7 +16,14 @@ export default function Navbar() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const router = useRouter();
   const { user, logout } = useAuth();
+  // useEffect(() => {
+  //   if (!user) {
+  //     router.push("/login");
+  //   }
+  // }, [user, router]);
+
   const { isChatOpen } = useChat(); // Consume ChatContext to check if chat is open
+  // Add this at the top of your component
 
   useEffect(() => {
     if (user && user.userName) {
@@ -123,46 +130,50 @@ export default function Navbar() {
 
       <div className="flex items-center space-x-6">
         {/* Notifications */}
-        <div className="navbar__notifications relative">
-          <FiBell
-            className="text-gray-700 text-xl cursor-pointer"
-            onClick={toggleNotificationDropdown}
-          />
-          {notificationCount > 0 && !isChatOpen && (
-            <span className="notification__badge absolute -top-1 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-              {notificationCount}
-            </span>
-          )}
-          {isNotificationDropdownOpen && (
-            <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-md w-64 py-2 z-50">
-              <h3 className="font-semibold text-lg px-4 py-2">Notifications</h3>
-              {notification.length > 0 ? (
-                notification.map((notif, index) => (
-                  <div
-                    key={index}
-                    className={`block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer ${
-                      !notif.seen ? "bg-gray-100" : ""
-                    }`}
-                  >
-                    {notif.message}
+        {user && (
+          <div className="navbar__notifications relative">
+            <FiBell
+              className="text-gray-700 text-xl cursor-pointer"
+              onClick={toggleNotificationDropdown}
+            />
+            {notificationCount > 0 && !isChatOpen && (
+              <span className="notification__badge absolute -top-1 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {notificationCount}
+              </span>
+            )}
+            {isNotificationDropdownOpen && (
+              <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-md w-64 py-2 z-50">
+                <h3 className="font-semibold text-lg px-4 py-2">
+                  Notifications
+                </h3>
+                {notification.length > 0 ? (
+                  notification.map((notif, index) => (
+                    <div
+                      key={index}
+                      className={`block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer ${
+                        !notif.seen ? "bg-gray-100" : ""
+                      }`}
+                    >
+                      {notif.message}
+                    </div>
+                  ))
+                ) : (
+                  <div className="block w-full text-left px-4 py-2 text-gray-500">
+                    No notifications yet.
                   </div>
-                ))
-              ) : (
-                <div className="block w-full text-left px-4 py-2 text-gray-500">
-                  No notifications yet.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {/* Messages */}
-        <div className="navbar__messages relative">
-          <Link href="/messages">
-            <FiMail className="text-gray-700 text-xl cursor-pointer" />
-          </Link>
-        </div>
-
+        {user && (
+          <div className="navbar__messages relative">
+            <Link href="/messages">
+              <FiMail className="text-gray-700 text-xl cursor-pointer" />
+            </Link>
+          </div>
+        )}
         {/* User */}
         {user && (
           <div className="relative">
