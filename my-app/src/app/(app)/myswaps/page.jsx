@@ -63,6 +63,7 @@ export default function TaskList() {
       if (response.data.success) {
         alert("Task confirmed!");
 
+        // Fetch updated tasks
         const refreshResponse = await axios.get(
           "http://localhost:5000/get-swap-tasks",
           {
@@ -72,11 +73,30 @@ export default function TaskList() {
 
         if (refreshResponse.data.success) {
           setTasks(refreshResponse.data.tasks);
+
+          // Check if both users confirmed
+          const taskPair = refreshResponse.data.tasks.find(
+            (task) => task.taskId === taskId
+          );
+
+          const taskGroup = refreshResponse.data.tasks.filter(
+            (task) => task.taskId === taskId
+          );
+
+          const user1 = taskGroup[0]?.currentUser;
+          const user2 = taskGroup[1]?.currentUser;
+          const bothConfirmed =
+            taskGroup[0]?.isConfirmed && taskGroup[1]?.isConfirmed;
+
+          if (bothConfirmed && user1 && user2) {
+            await axios.post("http://localhost:5000/api/increment-swap-count", {
+              user1,
+              user2,
+            });
+          }
         } else {
           setErrorMessage("Failed to refresh tasks after confirmation.");
         }
-      } else {
-        setErrorMessage("Error confirming task.");
       }
     } catch (error) {
       console.error("Error confirming task:", error);

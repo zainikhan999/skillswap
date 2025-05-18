@@ -21,6 +21,7 @@ export default function MessagingApp() {
   const [swapAccepted, setSwapAccepted] = useState(false); // New state to track swap acceptance
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
   const [recipient, setRecipient] = useState(null);
+  const [chatUserProfiles, setChatUserProfiles] = useState([]);
 
   // Refs
   const { socket, socketRef } = useSocket(); // Use the socket context
@@ -33,15 +34,20 @@ export default function MessagingApp() {
   const messagesEndRef = useRef(null); // For scrolling
 
   // Router and URL Search Params
-  // const router = useRouter();
   const searchParams = useSearchParams();
   // Use chat context
   const { isChatOpen, toggleChat } = useChat();
   useEffect(() => {
     console.log("Chat open state has been updated:", isChatOpen);
   }, [isChatOpen]); // This will trigger every time `isChatOpen` changes
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const handleRecipientClick = (user) => {
+    if (user === sender) return;
     console.log("Chat with user:", user);
 
     // Store recipient in localStorage
@@ -262,6 +268,52 @@ export default function MessagingApp() {
       day: "numeric",
     });
   }
+  useEffect(() => {
+    if (sender && chatUsers.length > 0) {
+      // filter out logged-in user
+      const usersToFetch = chatUsers.filter((user) => user !== sender);
+
+      axios
+        .post("http://localhost:5000/api/get-user-profiles", {
+          usernames: usersToFetch,
+        })
+        .then((res) => {
+          setChatUserProfiles(res.data); // Array of profiles with image URLs
+        })
+        .catch((err) => {
+          console.error("Error fetching user profiles:", err);
+        });
+    }
+  }, [sender, chatUsers]);
+
+  const [userProfiles, setUserProfiles] = useState({});
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const allUsernames = Array.from(new Set([sender, ...chatUsers]));
+      try {
+        const res = await axios.post(
+          "http://localhost:5000/api/get-user-profiles",
+          {
+            usernames: allUsernames,
+          }
+        );
+
+        // Convert array to object for easy lookup: { username: profileData }
+        const profilesMap = {};
+        res.data.forEach((profile) => {
+          profilesMap[profile.username] = profile;
+        });
+        setUserProfiles(profilesMap);
+      } catch (err) {
+        console.error("Failed to fetch user profiles", err);
+      }
+    };
+
+    if (sender && chatUsers.length > 0) {
+      fetchProfiles();
+    }
+  }, [sender, chatUsers]);
 
   return (
     <div className="h-screen flex overflow-hidden relative bg-white">
@@ -273,13 +325,10 @@ export default function MessagingApp() {
           } lg:translate-x-0 lg:block`}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
-            {/* Back arrow button (optional functionality, e.g. go to home or toggle) */}
+            {/* Back arrow button */}
             <button
-              className="text-xl text-green-600 lg:hidden "
-              onClick={() => {
-                // Optional: Add back logic here
-                setSidebarOpen(false);
-              }}
+              className="text-xl text-green-600 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
             >
               <FaArrowLeft />
             </button>
@@ -295,16 +344,34 @@ export default function MessagingApp() {
             </button>
           </div>
 
-          {chatUsers.map((user) => (
-            <div
-              key={user}
-              className="w-full text-left px-4 py-3 hover:bg-green-100 cursor-pointer flex items-center gap-3 transition-all"
-              onClick={() => handleRecipientClick(user)} // Using the handleRecipientClick function
-            >
-              <FaUserCircle className="text-green-500 text-2xl" />
-              <div className="text-gray-800 font-medium">{user}</div>
-            </div>
-          ))}
+          {/* Filter out the logged-in user */}
+          {chatUsers
+            .filter((user) => user !== sender)
+            .map((username) => {
+              // find profile by username
+              const profile = chatUserProfiles.find(
+                (p) => p.username === username
+              );
+
+              return (
+                <div
+                  key={username}
+                  className="w-full text-left px-4 py-3 hover:bg-green-100 cursor-pointer flex items-center gap-3 transition-all"
+                  onClick={() => handleRecipientClick(username)}
+                >
+                  {profile && profile.profileImage ? (
+                    <img
+                      src={profile.profileImage}
+                      alt={`${username} profile`}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <FaUserCircle className="text-green-500 text-2xl" />
+                  )}
+                  <div className="text-gray-800 font-medium">{username}</div>
+                </div>
+              );
+            })}
         </div>
       )}
 
@@ -364,6 +431,9 @@ export default function MessagingApp() {
                 const showDateSeparator =
                   index === 0 || currentDate !== previousDate;
 
+                const profile = userProfiles[msg.user];
+                const profileImage = profile?.profileImage;
+
                 return (
                   <div key={index}>
                     {showDateSeparator && currentDate && (
@@ -376,9 +446,16 @@ export default function MessagingApp() {
                         isSender ? "justify-end" : "justify-start"
                       }`}
                     >
-                      {!isSender && (
-                        <FaUserCircle className="text-gray-600 text-2xl" />
-                      )}
+                      {!isSender &&
+                        (profileImage ? (
+                          <img
+                            src={profileImage}
+                            alt={`${msg.user} profile`}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <FaUserCircle className="text-gray-600 text-2xl" />
+                        ))}
                       <div
                         className={`max-w-[80%] px-4 py-2 rounded-2xl shadow-sm break-words ${
                           isSender
@@ -398,9 +475,16 @@ export default function MessagingApp() {
                             )}
                         </div>
                       </div>
-                      {isSender && (
-                        <FaUserCircle className="text-gray-600 text-2xl" />
-                      )}
+                      {isSender &&
+                        (profileImage ? (
+                          <img
+                            src={profileImage}
+                            alt={`${msg.user} profile`}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <FaUserCircle className="text-gray-600 text-2xl" />
+                        ))}
                     </div>
                   </div>
                 );

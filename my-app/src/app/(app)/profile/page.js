@@ -1,9 +1,13 @@
 "use client";
-import { FaUserCircle } from "react-icons/fa"; // Import the icon
+import { FaUserCircle } from "react-icons/fa";
 import { useState, useEffect } from "react";
+import { useRef } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "contexts/AuthContext";
+import ErrorPopup from "../../components/errorPopup";
+import SuccessPopup from "../../components/successPopup"; // <-- Import SuccessPopup
+import throttle from "lodash/throttle";
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dnmhfubvn/image/upload";
 const UPLOAD_PRESET = "displaypicture";
@@ -25,6 +29,88 @@ export default function ProfileForm() {
   const [image, setImage] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const { user } = useAuth();
+  const [errorPopup, setErrorPopup] = useState({ show: false, message: "" });
+  const [successPopup, setSuccessPopup] = useState({
+    show: false,
+    message: "",
+  }); // <-- Success popup state
+  const [suggestion, setSuggestion] = useState("");
+  const debounceTimeout = useRef(null);
+  const maxWords = 100;
+  const [bioWordCount, setBioWordCount] = useState(0);
+  // Debounced fetch suggestion from backend API
+  const fetchSuggestion = async (text) => {
+    if (!text.trim()) {
+      setSuggestion("");
+      return;
+    }
+    try {
+      const res = await axios.post("http://localhost:5000/api/suggest-bio", {
+        text,
+      });
+      setSuggestion(res.data.suggestion || "");
+    } catch (error) {
+      // Fail silently if API or network fails
+      setSuggestion("");
+    }
+  };
+
+  const handleBioChange = (e) => {
+    const inputText = e.target.value;
+    const wordCount = countWords(inputText);
+
+    if (wordCount <= maxWords) {
+      setFormData((prev) => ({ ...prev, bio: inputText }));
+      setBioWordCount(wordCount);
+
+      if (wordCount >= 5) {
+        throttledFetchSuggestion(inputText);
+      } else {
+        setSuggestion(""); // Clear any existing suggestion if below threshold
+      }
+    }
+  };
+
+  const throttledFetchSuggestion = useRef(
+    throttle(async (text) => {
+      if (!text.trim()) {
+        setSuggestion("");
+        return;
+      }
+      try {
+        const res = await axios.post("http://localhost:5000/api/suggest-bio", {
+          text,
+        });
+        setSuggestion(res.data.suggestion || "");
+      } catch (error) {
+        setSuggestion("");
+      }
+    }, 2000) // throttle limit: 2 seconds
+  ).current;
+  const acceptSuggestion = () => {
+    const currentBio = formData.bio;
+    if (suggestion.startsWith(currentBio)) {
+      const acceptedPart = suggestion.slice(currentBio.length);
+      setFormData((prev) => ({ ...prev, bio: currentBio + acceptedPart }));
+      setSuggestion(""); // clear after accept
+    }
+  };
+
+  const showError = (msg) => {
+    setErrorPopup({ show: true, message: msg });
+  };
+
+  const closeError = () => {
+    setErrorPopup({ show: false, message: "" });
+  };
+
+  const closeSuccess = () => {
+    setSuccessPopup({ show: false, message: "" });
+    router.push("/allservices"); // Navigate after success popup closes
+  };
+
+  const countWords = (text) => text.trim().split(/\s+/).filter(Boolean).length;
+
   useEffect(() => {
     if (!user) {
       router.push("/login");
@@ -49,7 +135,7 @@ export default function ProfileForm() {
   };
 
   const uploadImage = async () => {
-    if (!image) return alert("Please select an image!");
+    if (!image) return showError("Please select an image!");
 
     const formData = new FormData();
     formData.append("file", image);
@@ -61,9 +147,9 @@ export default function ProfileForm() {
 
       setImageUrl(uploadedImageUrl);
       setFormData((prev) => ({ ...prev, profileImage: uploadedImageUrl }));
-      alert("Profile picture uploaded successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
+      showError("Failed to upload image");
     }
   };
 
@@ -90,14 +176,16 @@ export default function ProfileForm() {
     const filteredSkills = formData.skills.filter(
       (skill) => skill.trim() !== ""
     );
+    const rawContact = formData.contactNumber.trim();
 
+    const fullContact = `+92${rawContact}`;
     const updatedData = {
       ...formData,
       skills: filteredSkills,
       country: "Pakistan",
+      contactNumber: fullContact,
     };
-    console.log(updatedData);
-    // Include country in the validation too
+
     if (
       !updatedData.name ||
       !updatedData.city ||
@@ -106,7 +194,18 @@ export default function ProfileForm() {
       !updatedData.bio ||
       filteredSkills.length === 0
     ) {
-      alert("All fields are required, and at least one skill must be provided");
+      showError(
+        "All fields are required, and at least one skill must be provided"
+      );
+      return;
+    }
+
+    if (!/^\+923\d{9}$/.test(fullContact)) {
+      showError("Contact number must be in format +92XXXXXXXXXX");
+      return;
+    }
+    if (countWords(formData.bio) > maxWords) {
+      showError(`Bio must not exceed ${maxWords} words`);
       return;
     }
 
@@ -115,10 +214,10 @@ export default function ProfileForm() {
         "http://localhost:5000/api/submit-profile",
         updatedData
       );
-      alert(response.data.message);
-      router.push("/allservices");
+      setSuccessPopup({ show: true, message: response.data.message }); // <-- Success popup on submit
+      // router.push("/allservices"); // <-- moved navigation into closeSuccess for UX
     } catch (error) {
-      alert(error.response?.data?.message || "Error submitting profile");
+      showError(error.response?.data?.message || "Error submitting profile");
     }
   };
 
@@ -131,7 +230,6 @@ export default function ProfileForm() {
         {/* Profile Picture Upload Section */}
         <div className="mb-6 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            {/* Check if imageUrl exists; if not, show the default avatar icon */}
             {imageUrl ? (
               <img
                 src={imageUrl}
@@ -139,13 +237,15 @@ export default function ProfileForm() {
                 className="w-24 h-24 rounded-full object-cover"
               />
             ) : (
-              <FaUserCircle className="text-gray-400 w-24 h-24" /> // Display icon when no image is uploaded
+              <FaUserCircle className="text-gray-400 w-24 h-24" />
             )}
           </div>
 
           <div className="flex flex-col items-end">
             <input type="file" onChange={handleFileChange} className="mb-2" />
             <button
+              type="button"
+              disabled={!image}
               onClick={uploadImage}
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
@@ -184,24 +284,67 @@ export default function ProfileForm() {
             className="w-full p-3 border border-gray-300 rounded-lg bg-gray-200"
             readOnly
           />
-          <input
-            type="text"
-            name="contactNumber"
-            placeholder="Contact Number"
-            className="w-full p-3 border border-gray-300 rounded-lg"
-            onChange={handleChange}
-            value={formData.contactNumber}
-          />
+          <div className="flex items-center">
+            <span className="px-3 py-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg select-none">
+              +92
+            </span>
+            <input
+              type="text"
+              name="contactNumber"
+              placeholder="3001234567"
+              maxLength={10}
+              className="w-full p-3 border border-gray-300 rounded-r-lg"
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/\D/g, "");
+                setFormData({ ...formData, contactNumber: digitsOnly });
+              }}
+              value={formData.contactNumber}
+            />
+          </div>
         </div>
-        <div className="mt-6">
+        <div className="relative mt-6">
           <textarea
             name="bio"
             placeholder="Tell us about yourself..."
-            className="w-full p-3 border border-gray-300 rounded-lg"
-            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-lg bg-transparent relative z-10"
+            onChange={handleBioChange}
+            onKeyDown={(e) => {
+              if (e.key === "Tab" && suggestion) {
+                e.preventDefault();
+                acceptSuggestion(); // fill in suggestion
+              }
+            }}
             value={formData.bio}
+            rows={5}
+            style={{ background: "transparent" }}
           />
+
+          {/* Ghost suggestion text */}
+          {suggestion && (
+            <div
+              className="pointer-events-none absolute top-[1.2rem] left-[1rem] text-gray-400 whitespace-pre-wrap"
+              style={{
+                fontFamily: "inherit",
+                fontSize: "1rem",
+                lineHeight: "1.5rem",
+                whiteSpace: "pre-wrap",
+                overflowWrap: "break-word",
+                zIndex: 0,
+              }}
+            >
+              {formData.bio + suggestion.slice(formData.bio.length)}
+            </div>
+          )}
+
+          <p
+            className={`text-sm mt-1 ${
+              bioWordCount > maxWords ? "text-red-500" : "text-gray-500"
+            }`}
+          >
+            {bioWordCount}/{maxWords} words
+          </p>
         </div>
+
         <div className="mt-6">
           <label className="block text-gray-700 font-semibold mb-2">
             Skills
@@ -236,6 +379,14 @@ export default function ProfileForm() {
           </button>
         </div>
       </div>
+
+      {errorPopup.show && (
+        <ErrorPopup message={errorPopup.message} onClose={closeError} />
+      )}
+
+      {successPopup.show && (
+        <SuccessPopup message={successPopup.message} onClose={closeSuccess} />
+      )}
     </div>
   );
 }

@@ -30,6 +30,10 @@ const UserSchema = new mongoose.Schema(
       required: true,
       minlength: 8,
     },
+    swapscount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true } //to show user time when it filled the form
 );

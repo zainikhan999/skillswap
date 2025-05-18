@@ -5,13 +5,6 @@ const ServicesSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-
-  swapscount: {
-    type: Number,
-    required: true,
-    default: 0,
-  },
-
   skillDescription: {
     type: String,
     required: true,

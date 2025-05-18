@@ -17,6 +17,7 @@ export default function ProfileWithSidebar() {
   });
   const [gigs, setGigs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalSwaps, setTotalSwaps] = useState(0);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -26,20 +27,29 @@ export default function ProfileWithSidebar() {
 
       const fetchProfileAndGigs = async () => {
         try {
-          const [profileRes, gigsRes] = await Promise.all([
+          const [profileRes, gigsRes, swapCountRes] = await Promise.all([
             axios.get(
               `http://localhost:5000/api/get-latest-profile?username=${username}`
             ),
             axios.get(`http://localhost:5000/api/get-my-gigs/${username}`),
+            axios.get(`http://localhost:5000/api/get-swap-count/${username}`),
           ]);
+
           setFormData(profileRes.data);
           setGigs(gigsRes.data);
+          setTotalSwaps(swapCountRes.data.swapCount);
+
+          const total = gigsRes.data.reduce(
+            (acc, gig) => acc + (gig.swapscount || 0),
+            0
+          );
+          setTotalSwaps(total);
+
           setLoading(false);
         } catch (error) {
           console.error("Error fetching data:", error);
         }
       };
-
       fetchProfileAndGigs();
     }
   }, []);
@@ -69,6 +79,9 @@ export default function ProfileWithSidebar() {
             <FaPhoneAlt className="text-gray-400" />
             {formData.contactNumber}
           </p>
+          <div className="mt-4 text-sm text-gray-600">
+            <strong>Completed Swaps:</strong> {totalSwaps}
+          </div>
 
           <div className="w-full text-left mt-4">
             <h3 className="text-gray-700 font-semibold mb-2 px-2">Skills</h3>
@@ -110,7 +123,7 @@ export default function ProfileWithSidebar() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">No gigs found.</p>
+              <p className="text-gray-500">No Services found.</p>
             )}
           </div>
         </div>

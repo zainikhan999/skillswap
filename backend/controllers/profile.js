@@ -57,3 +57,21 @@ export const viewProfile = TryCatch(async (req, res, next) => {
     next(error);
   }
 });
+
+export const viewMultipleProfiles = TryCatch(async (req, res, next) => {
+  const { usernames } = req.body; // Expect an array of usernames in POST body
+
+  if (!usernames || !Array.isArray(usernames) || usernames.length === 0) {
+    return res.status(400).json({ message: "Usernames array is required." });
+  }
+
+  try {
+    const userProfiles = await SkillForm.find({
+      username: { $in: usernames },
+    });
+
+    res.json(userProfiles);
+  } catch (error) {
+    next(error);
+  }
+});

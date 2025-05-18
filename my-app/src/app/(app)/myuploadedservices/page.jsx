@@ -116,7 +116,7 @@ const MyGigsPage = () => {
                   (e.currentTarget.style.backgroundColor = "#dc2626")
                 }
               >
-                Remove Gig
+                Remove Service
               </button>
             </div>
           ))}
@@ -129,7 +129,7 @@ const MyGigsPage = () => {
         </div>
       ) : (
         <p className="text-center text-gray-500 mt-6">
-          You haven’t uploaded any gigs yet.
+          You haven’t uploaded any services yet.
         </p>
       )}
     </div>

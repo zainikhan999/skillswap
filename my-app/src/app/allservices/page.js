@@ -139,7 +139,7 @@ const AllGigs = () => {
         </div>
       ) : (
         <p className="text-center text-gray-500 mt-6">
-          No gigs found for this category.
+          No services found for this category.
         </p>
       )}
     </div>
