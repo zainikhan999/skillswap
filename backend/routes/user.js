@@ -36,5 +36,4 @@ app.post("/increment-swap-count", swapCount);
 app.get("/get-swap-count/:username", getSwapCount); // Fetch gigs for a specific user
 app.post("/suggest-bio", suggestBio);
 app.post("/get-user-profiles", viewMultipleProfiles);
-
 export default app;

@@ -10,6 +10,7 @@ const MyGigsPage = () => {
   const [profiles, setProfiles] = useState({});
   const [currentUser, setCurrentUser] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [swapCounts, setSwapCounts] = useState({});
 
   const { user } = useAuth();
   console.log("User:", user);
@@ -17,29 +18,36 @@ const MyGigsPage = () => {
   useEffect(() => {
     const fetchUserGigsAndProfile = async () => {
       try {
-        setCurrentUser(user.userName); // Set the current user
+        setCurrentUser(user.userName);
         const { data: gigData } = await axios.get(
           `http://localhost:5000/api/get-my-gigs/${user.userName}`
         );
         setGigs(gigData);
-        console.log("Fetched Gigs:", gigData);
 
-        // Fetch user profile data
         const { data: profileData } = await axios.get(
           `http://localhost:5000/api/get-latest-profile?username=${user.userName}`
         );
         setProfiles((prevProfiles) => ({
           ...prevProfiles,
-          [user.userName]: profileData, // Save the current user's profile
+          [user.userName]: profileData,
+        }));
+
+        const { data: swapData } = await axios.get(
+          `http://localhost:5000/api/get-swap-count/${user.userName}`
+        );
+        setSwapCounts((prev) => ({
+          ...prev,
+          [user.userName]: swapData.swapCount || 0,
         }));
       } catch (err) {
         console.error("Error fetching user gigs or profile:", err);
+        setSwapCounts((prev) => ({
+          ...prev,
+          [user.userName]: 0,
+        }));
       }
     };
-
-    if (user?.userName) {
-      fetchUserGigsAndProfile();
-    }
+    fetchUserGigsAndProfile();
   }, [user?.userName]);
 
   const handleDelete = async (gigId) => {
@@ -94,7 +102,8 @@ const MyGigsPage = () => {
                 <strong>Exchange For:</strong> {gig.exchangeService}
               </p>
               <p className="text-sm text-gray-500">
-                <strong>Swaps:</strong> {gig.swapscount}
+                <strong>Swaps:</strong>{" "}
+                {swapCounts[gig.username] ?? "Loading..."}
               </p>
 
               <button

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext"; // Import the AuthContext
+import Link from "next/link";
+
 const AllGigs = () => {
   const router = useRouter();
   const [gigs, setGigs] = useState([]);
@@ -10,6 +12,8 @@ const AllGigs = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [filteredGigs, setFilteredGigs] = useState([]);
+  const [swapCounts, setSwapCounts] = useState({});
+
   const { user } = useAuth(); // Access the user from AuthContext
   useEffect(() => {
     if (!user) {
@@ -46,6 +50,33 @@ const AllGigs = () => {
         setProfiles(profilesData);
         setGigs(gigList);
         setFilteredGigs(gigList); // Initially show all gigs
+        const swapCountsData = {};
+
+        await Promise.all(
+          gigList.map(async (gig) => {
+            if (!profilesData[gig.username]) {
+              const res = await axios.get(
+                `http://localhost:5000/api/get-latest-profile?username=${gig.username}`
+              );
+              profilesData[gig.username] = res.data;
+            }
+
+            if (!swapCountsData[gig.username]) {
+              try {
+                const res = await axios.get(
+                  `http://localhost:5000/api/get-swap-count/${gig.username}`
+                );
+                swapCountsData[gig.username] = res.data.swapCount || 0;
+              } catch (err) {
+                console.error(`Swap count error for ${gig.username}:`, err);
+                swapCountsData[gig.username] = 0;
+              }
+            }
+          })
+        );
+
+        setProfiles(profilesData);
+        setSwapCounts(swapCountsData);
       } catch (err) {
         console.error(err);
       }
@@ -111,7 +142,14 @@ const AllGigs = () => {
                     className="w-16 h-16 rounded-full object-cover"
                   />
                   <p className="text-sm text-gray-600">
-                    {profile?.name} (@{gig.username})
+                    {profile?.name} (
+                    <Link
+                      href={`/userpublicprofile/${gig.username}`}
+                      className="text-green-600 hover:underline"
+                    >
+                      @{gig.username}
+                    </Link>
+                    )
                   </p>
                 </div>
 
@@ -123,7 +161,8 @@ const AllGigs = () => {
                   <strong>Exchange For:</strong> {gig.exchangeService}
                 </p>
                 <p className="text-sm text-gray-500">
-                  <strong>Swaps:</strong> {gig.swapscount}
+                  <strong>Swaps:</strong>{" "}
+                  {swapCounts[gig.username] ?? "Loading..."}
                 </p>
 
                 {/* Request Swap Button */}

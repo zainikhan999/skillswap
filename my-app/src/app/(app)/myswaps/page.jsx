@@ -53,6 +53,7 @@ export default function TaskList() {
     fetchTasks();
   }, [currentUserFromStorage]);
 
+  // ✅ FRONTEND FIXED
   const handleConfirm = async (taskId) => {
     try {
       const response = await axios.post("http://localhost:5000/confirm-task", {
@@ -63,35 +64,36 @@ export default function TaskList() {
       if (response.data.success) {
         alert("Task confirmed!");
 
-        // Fetch updated tasks
         const refreshResponse = await axios.get(
           "http://localhost:5000/get-swap-tasks",
-          {
-            params: { currentUser: currentUserFromStorage },
-          }
+          { params: { currentUser: currentUserFromStorage } }
         );
 
         if (refreshResponse.data.success) {
-          setTasks(refreshResponse.data.tasks);
+          const updatedTasks = refreshResponse.data.tasks;
+          setTasks(updatedTasks);
 
-          // Check if both users confirmed
-          const taskPair = refreshResponse.data.tasks.find(
-            (task) => task.taskId === taskId
+          const matchedSwapTasks = updatedTasks.filter(
+            (t) => t.taskId === taskId
           );
 
-          const taskGroup = refreshResponse.data.tasks.filter(
-            (task) => task.taskId === taskId
-          );
+          const usersInSwap = [
+            ...new Set(matchedSwapTasks.map((t) => t.currentUser)),
+          ];
 
-          const user1 = taskGroup[0]?.currentUser;
-          const user2 = taskGroup[1]?.currentUser;
           const bothConfirmed =
-            taskGroup[0]?.isConfirmed && taskGroup[1]?.isConfirmed;
+            matchedSwapTasks.length === 2 &&
+            matchedSwapTasks.every((task) => task.isConfirmed === true); // ✅ FIX
 
-          if (bothConfirmed && user1 && user2) {
+          if (bothConfirmed && usersInSwap.length === 2) {
+            console.log(
+              "Both confirmed, incrementing swap count:",
+              usersInSwap
+            );
+
             await axios.post("http://localhost:5000/api/increment-swap-count", {
-              user1,
-              user2,
+              users: usersInSwap,
+              taskId,
             });
           }
         } else {
