@@ -4,6 +4,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext"; // Import the AuthContext
 import Link from "next/link";
+import { FaUserCircle } from "react-icons/fa";
 
 const AllGigs = () => {
   const router = useRouter();
@@ -136,11 +137,15 @@ const AllGigs = () => {
               >
                 {/* Display User Profile First */}
                 <div className="flex items-center gap-4 mb-4">
-                  <img
-                    src={profile?.profileImage}
-                    alt="Profile"
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
+                  {profile?.profileImage ? (
+                    <img
+                      src={profile.profileImage}
+                      alt="Profile"
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <FaUserCircle className="w-16 h-16 text-gray-400" />
+                  )}
                   <p className="text-sm text-gray-600">
                     {profile?.name} (
                     <Link

@@ -37,59 +37,57 @@ export const classifyText = async (req, res) => {
   const { text } = req.body;
 
   try {
-    const CATEGORIES = await fetchCategoriesFromDB();
+    const CATEGORIES = await fetchCategoriesFromDB(); // Example: ["Fitness", "Education", "Marketing"]
+    const categorySet = new Set(CATEGORIES.map((c) => c.toLowerCase())); // Lowercase for match
 
-    if (!CATEGORIES.length) {
-      return res
-        .status(500)
-        .json({ error: "No categories available for classification." });
-    }
-    let category = null;
+    // Construct prompt with existing categories
+    const prompt = `
+You are an expert classifier. Classify the given service description into ONE category from this list ONLY: [${CATEGORIES.join(
+      ", "
+    )}].
 
-    // Use Gemini to classify the text into a category
-    const geminiResponse = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: `You are a classification expert who categorizes service descriptions into high-level, generic categories used in business directories or marketplaces.
-Your job is to extract the **main theme** of a service and classify it under a **generic category** like "Fitness", "Education", "Health", "Marketing", etc.
-
-❗ Important rules:
-- Only output ONE WORD.
-- Your response MUST be a broad category, NOT a specific activity or service.
-- Do NOT return specific services that can't be used to categorize other services related to it
-- Think of what section this service would fall under on a large platform like Fiverr, Upwork, or a local directory.
+- Choose the most relevant existing category from the list.
+- If none fits, suggest ONE NEW broad category (e.g., "Design", "Technology", "Food") but NOT unrelated categories.
+- ONLY output the category name exactly as in the list or a new suitable broad category.
+- NO explanations or extra text.
 
 Examples:
-- "I will be giving yoga classes" → Gym or Fitness
-- "We offer WordPress and app development" → Web Development
-- "Math tutoring for high school students" → Education
-- "I will be your personal trainer" → Gym or Fitness
 - "I will help you with cooking recipes" → Food
+- "Math tutoring for high school students" → Education
+- "Yoga classes" → Fitness
 
-Now, analyze and classify the following service:
-"${text}"
-Return ONLY the category.`,
+Service Description: "${text}"
+`;
+
+    // Ask Gemini
+    const geminiResponse = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
     });
 
-    category =
+    const rawCategory =
       geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
       "Miscellaneous";
 
-    // Add category to database if it's new
-    await addNewCategoryToDatabase(category);
+    const formattedCategory = rawCategory
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
 
-    console.log(`Assigned category: "${category}"`);
+    // Check if the returned category exists in DB
+    if (!categorySet.has(formattedCategory.toLowerCase())) {
+      await addNewCategoryToDatabase(formattedCategory);
+    }
+
+    console.log(`Final category: ${formattedCategory}`);
 
     res.json({
-      category,
+      category: formattedCategory,
     });
   } catch (error) {
-    console.error(
-      "Gemini Classification Error:",
-      error.response?.data || error.message
-    );
+    console.error("Classification Error:", error.message);
     res.status(500).json({
       category: "Error",
-      details: error.response?.data || error.message,
+      details: error.message,
     });
   }
 };

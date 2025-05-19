@@ -38,22 +38,40 @@ export default function ProfileForm() {
   const debounceTimeout = useRef(null);
   const maxWords = 100;
   const [bioWordCount, setBioWordCount] = useState(0);
-  // Debounced fetch suggestion from backend API
-  const fetchSuggestion = async (text) => {
-    if (!text.trim()) {
-      setSuggestion("");
+  const [showAIPrompt, setShowAIPrompt] = useState(false);
+  const [aiPrompt, setAIPrompt] = useState("");
+  const [loadingAI, setLoadingAI] = useState(false);
+
+  const generateBioFromPrompt = async () => {
+    if (!aiPrompt.trim()) {
+      showError("Please enter a prompt for AI bio generation.");
       return;
     }
+
     try {
+      setLoadingAI(true);
       const res = await axios.post("http://localhost:5000/api/suggest-bio", {
-        text,
+        prompt: aiPrompt,
       });
-      setSuggestion(res.data.suggestion || "");
-    } catch (error) {
-      // Fail silently if API or network fails
-      setSuggestion("");
+
+      if (res.data.suggestion) {
+        setFormData((prev) => ({
+          ...prev,
+          bio: res.data.suggestion,
+        }));
+        setBioWordCount(countWords(res.data.suggestion));
+        setSuggestion(""); // Clear suggestions if new bio comes from AI
+      } else {
+        showError("No bio generated. Try a different prompt.");
+      }
+    } catch (err) {
+      showError("Failed to generate bio from AI.");
+    } finally {
+      setLoadingAI(false);
     }
   };
+
+  // Debounced fetch suggestion from backend API
 
   const handleBioChange = (e) => {
     const inputText = e.target.value;
@@ -303,6 +321,36 @@ export default function ProfileForm() {
           </div>
         </div>
         <div className="relative mt-6">
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-gray-700 font-semibold">Bio</label>
+            <button
+              type="button"
+              onClick={() => setShowAIPrompt(!showAIPrompt)}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Ask with AI
+            </button>
+          </div>
+
+          {showAIPrompt && (
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Describe yourself or the tone you want..."
+                value={aiPrompt}
+                onChange={(e) => setAIPrompt(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg mb-2"
+              />
+              <button
+                onClick={generateBioFromPrompt}
+                className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                disabled={loadingAI}
+              >
+                {loadingAI ? "Generating..." : "Generate Bio"}
+              </button>
+            </div>
+          )}
+
           <textarea
             name="bio"
             placeholder="Tell us about yourself..."
@@ -322,7 +370,7 @@ export default function ProfileForm() {
           {/* Ghost suggestion text */}
           {suggestion && (
             <div
-              className="pointer-events-none absolute top-[1.2rem] left-[1rem] text-gray-400 whitespace-pre-wrap"
+              className="pointer-events-none absolute top-[4.7rem] left-[1rem] text-gray-400 whitespace-pre-wrap"
               style={{
                 fontFamily: "inherit",
                 fontSize: "1rem",

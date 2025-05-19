@@ -6,11 +6,13 @@ const ai = new GoogleGenAI({
 
 export const suggestBio = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { prompt } = req.body;
 
     const geminiResponse = await ai.models.generateContent({
       model: "gemini-2.0-flash",
-      contents: `You're an auto-complete assistant. Based on the following partial sentence, suggest a short continuation (3–6 words max), without repeating the input. Keep it relevant and concise. Sentence:\n\n"${text}"\n\nSuggestion:`,
+      contents: `Generate a professional bio based strictly on the following prompt: "${prompt}". 
+  The output must be a single paragraph with no headings, greetings, or conversational elements. 
+  Limit the response to exactly 100 words or fewer. Respond only with the paragraph.`,
     });
 
     const suggestion =
