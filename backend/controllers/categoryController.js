@@ -1,13 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import axios from "axios";
 import Category from "../Model/Category.js"; // Import the Category model
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Set up Google Gemini API instance
 const ai = new GoogleGenAI({
-  apiKey: "AIzaSyAphzP-ZWnBV1Iq-oR5weu9FwwguIep4vo",
+  apiKey: process.env.GEMINI_API_KEY,
 });
-
-const HF_API_KEY = "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";
 
 const fetchCategoriesFromDB = async () => {
   const categories = await Category.find({});

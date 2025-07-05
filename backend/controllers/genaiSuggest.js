@@ -1,7 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
 
+dotenv.config();
+
+// Set up Google Gemini API instance
 const ai = new GoogleGenAI({
-  apiKey: "AIzaSyAphzP-ZWnBV1Iq-oR5weu9FwwguIep4vo",
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 export const suggestBio = async (req, res) => {
