@@ -16,12 +16,6 @@ export default function Navbar() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const router = useRouter();
   const { user, logout } = useAuth();
-  // useEffect(() => {
-  //   if (!user) {
-  //     router.push("/login");
-  //   }
-  // }, [user, router]);
-
   const { isChatOpen } = useChat(); // Consume ChatContext to check if chat is open
   // Add this at the top of your component
 
@@ -126,7 +120,9 @@ export default function Navbar() {
 
   return (
     <nav className="navbar fixed top-0 left-0 w-full flex items-center justify-between px-6 py-3 bg-white text-gray-800 shadow-md z-50">
-      <div className="text-lg font-semibold">Skill Swap</div>
+      <Link href="/">
+        <div className="text-lg font-semibold cursor-pointer">Skill Swap</div>
+      </Link>
 
       <div className="flex items-center space-x-6">
         {/* Notifications */}
