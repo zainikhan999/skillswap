@@ -1,7 +1,7 @@
 ﻿# 🤝 Skill Exchange Platform (Final Year Project)
 
 Pakistan’s first AI-powered platform that allows users to **exchange skills** without any monetary transactions. This project promotes a barter-style model where users can offer and request services, connect in real-time, and receive AI-powered suggestions and categorization.
-![image](https://github.com/user-attachments/assets/6defc397-c8d8-4ed9-88c5-83e554e35c79)
+![Uploading image.png…]()
 
 ## 📹 Project Demo
 Watch Project Demo : https://drive.google.com/file/d/1US5MCH0TBbgubpf-fIYg7I3E8NgtlF1G/view?usp=sharing
